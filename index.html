@@ -169,7 +169,7 @@ const CACHE_KEY = 'antelia-catalog-cache-v1';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
 
 function driveImg(id){ return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w600'; }
-function driveAudio(id){ return 'https://drive.google.com/uc?export=download&id=' + id; }
+function driveAudio(id){ return 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media&key=' + API_KEY; }
 
 async function driveList(parentId){
   const q = encodeURIComponent("'" + parentId + "' in parents and trashed = false");
