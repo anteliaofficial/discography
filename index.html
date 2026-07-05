@@ -200,6 +200,22 @@ function isFolder(f){ return f.mimeType === 'application/vnd.google-apps.folder'
 function isAudio(f){ return f.mimeType === 'audio/mpeg' || /\.mp3$/i.test(f.name); }
 function isImage(f){ return f.mimeType && f.mimeType.startsWith('image/'); }
 
+function pickCoverImage(images){
+  if (!images.length) return null;
+  const scored = images.map(img => {
+    const n = img.name.toLowerCase();
+    let score = 0;
+    if (/\(art by/.test(n)) score += 200;
+    if (/\bfront\b/.test(n)) score += 100;
+    if (/\bcover\b/.test(n)) score += 90;
+    if (/\bfolder\b/.test(n)) score += 80;
+    if (/\b(back|booklet|inside|insert|disc|cd|liner|tray|contra|photo shoot|shoot)\b/.test(n)) score -= 60;
+    return { img, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].img;
+}
+
 function parseAlbumName(name){
   const m = name.match(/^\[(\d{4})\.(\d{2})\.(\d{2})\]\s*(.*)$/);
   if (m) return { title: m[4], date: m[1] + '-' + m[2] + '-' + m[3] };
@@ -235,10 +251,10 @@ async function buildAlbum(folder){
       const subCoverFolder = subContents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
       if (subCoverFolder){
         const coverFiles = await driveList(subCoverFolder.id);
-        const img = coverFiles.find(isImage);
+        const img = pickCoverImage(coverFiles.filter(isImage));
         if (img) discCover = driveImg(img.id);
       } else {
-        const img = subContents.find(isImage);
+        const img = pickCoverImage(subContents.filter(isImage));
         if (img) discCover = driveImg(img.id);
       }
       discs.push({ name: sub.name, cover: discCover, tracks });
@@ -250,10 +266,10 @@ async function buildAlbum(folder){
   const coverFolder = contents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
   if (coverFolder){
     const coverFiles = await driveList(coverFolder.id);
-    const img = coverFiles.find(isImage);
+    const img = pickCoverImage(coverFiles.filter(isImage));
     if (img) cover = driveImg(img.id);
   } else {
-    const img = contents.find(isImage);
+    const img = pickCoverImage(contents.filter(isImage));
     if (img) cover = driveImg(img.id);
   }
   return { title, date, cover, tracks: directTracks, multiDisc: false };
