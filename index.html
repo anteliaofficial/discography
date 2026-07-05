@@ -112,6 +112,7 @@
   @keyframes discIn{ from{ opacity:0; transform:translateX(14px); } to{ opacity:1; transform:translateX(0); } }
   .album-title-multi{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 2px; }
   .disc-name-active{ font-size:13px; color:var(--ink-dim); margin:0 0 16px; }
+  .solo-cover{ width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:8px; }
 
   .player{
     position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--bg-raised); border-top:1px solid var(--line);
@@ -446,6 +447,11 @@ function renderAlbumView(album){
       discsRow.appendChild(card);
     });
     wrap.appendChild(discsRow);
+  } else if (currentDisc.cover){
+    const soloCover = document.createElement('img');
+    soloCover.className = 'solo-cover';
+    soloCover.src = currentDisc.cover;
+    wrap.appendChild(soloCover);
   }
 
   const trackWrap = document.createElement('div');
