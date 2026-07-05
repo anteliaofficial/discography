@@ -103,7 +103,7 @@
 
   .discs-row{ display:flex; gap:12px; overflow-x:auto; padding:4px 2px 10px; scrollbar-width:none; }
   .discs-row::-webkit-scrollbar{ display:none; }
-  .disc-card{ flex:0 0 auto; width:112px; cursor:pointer; opacity:.5; transform:scale(.9); transition:all .25s ease; }
+  .disc-card{ flex:0 0 auto; width:120px; cursor:pointer; opacity:.5; transform:scale(.9); transition:all .25s ease; }
   .disc-card.active{ opacity:1; transform:scale(1); }
   .disc-card img, .disc-card .halo-placeholder{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; border:1px solid var(--line); display:block; }
   .disc-card .halo-placeholder{ background:linear-gradient(160deg,#1c1c22,#0a0a0d); }
@@ -430,12 +430,12 @@ function renderAlbumView(album){
 
   const currentDisc = album.discs[state.discIndex];
 
-  if (album.multiDisc){
-    const discNameActive = document.createElement('div');
-    discNameActive.className = 'disc-name-active';
-    discNameActive.textContent = currentDisc.name;
-    wrap.appendChild(discNameActive);
+  const subtitleText = document.createElement('div');
+  subtitleText.className = 'disc-name-active';
+  subtitleText.textContent = album.multiDisc ? currentDisc.name : album.title;
+  wrap.appendChild(subtitleText);
 
+  if (album.multiDisc){
     const discsRow = document.createElement('div');
     discsRow.className = 'discs-row';
     album.discs.forEach((disc, i) => {
