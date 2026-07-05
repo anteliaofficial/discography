@@ -272,7 +272,7 @@ async function buildAlbum(folder){
     const img = pickCoverImage(contents.filter(isImage));
     if (img) cover = driveImg(img.id);
   }
-  return { title, date, cover, tracks: directTracks, multiDisc: false };
+  return { title, date, cover, tracks: directTracks, multiDisc: false, discs: [{ name: title, cover, tracks: directTracks }] };
 }
 
 async function buildCatalog(){
@@ -357,8 +357,7 @@ function renderMain(){
   main.innerHTML = '';
   if (!state.project || !state.category) return;
   if (state.album){
-    if (state.album.multiDisc) renderMultiDiscAlbum(state.album);
-    else renderAlbum(state.album);
+    renderAlbumView(state.album);
     countLabel.textContent = '';
     sortBtn.style.display = 'none';
     return;
@@ -404,41 +403,7 @@ function renderMain(){
   main.appendChild(grid);
 }
 
-function renderAlbum(album){
-  const wrap = document.createElement('div');
-  wrap.className = 'tracklist';
-  const back = document.createElement('button');
-  back.className = 'back-btn';
-  back.innerHTML = '← volver';
-  back.onclick = () => { state.album = null; renderAll(); };
-  wrap.appendChild(back);
-
-  const head = document.createElement('div');
-  head.className = 'album-head';
-  head.innerHTML = (album.cover ? '<img src="' + album.cover + '">' : '') +
-    '<div class="info"><div class="title">' + album.title + '</div><div class="date">' + album.date + '</div></div>';
-  wrap.appendChild(head);
-
-  let lastDisc = null;
-  album.tracks.forEach((tr, i) => {
-    if (album.multiDisc && tr.discName !== lastDisc){
-      const discHead = document.createElement('div');
-      discHead.style.cssText = 'margin:18px 0 6px;font-size:11px;letter-spacing:0.6px;text-transform:uppercase;color:var(--ink-dim)';
-      discHead.textContent = tr.discName;
-      wrap.appendChild(discHead);
-      lastDisc = tr.discName;
-    }
-    const row = document.createElement('div');
-    row.className = 'track';
-    row.dataset.idx = i;
-    row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>';
-    row.onclick = () => playAlbumTrack(album, i);
-    wrap.appendChild(row);
-  });
-  main.appendChild(wrap);
-}
-
-function renderMultiDiscAlbum(album){
+function renderAlbumView(album){
   if (typeof state.discIndex !== 'number') state.discIndex = 0;
 
   const wrap = document.createElement('div');
@@ -455,24 +420,33 @@ function renderMultiDiscAlbum(album){
   albumTitle.textContent = album.title;
   wrap.appendChild(albumTitle);
 
+  if (album.date){
+    const albumDate = document.createElement('div');
+    albumDate.className = 'disc-name-active';
+    albumDate.textContent = album.date;
+    wrap.appendChild(albumDate);
+  }
+
   const currentDisc = album.discs[state.discIndex];
 
-  const discNameActive = document.createElement('div');
-  discNameActive.className = 'disc-name-active';
-  discNameActive.textContent = currentDisc.name;
-  wrap.appendChild(discNameActive);
+  if (album.multiDisc){
+    const discNameActive = document.createElement('div');
+    discNameActive.className = 'disc-name-active';
+    discNameActive.textContent = currentDisc.name;
+    wrap.appendChild(discNameActive);
 
-  const discsRow = document.createElement('div');
-  discsRow.className = 'discs-row';
-  album.discs.forEach((disc, i) => {
-    const card = document.createElement('div');
-    card.className = 'disc-card' + (i === state.discIndex ? ' active' : '');
-    card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>') +
-      '<div class="name">' + disc.name + '</div>';
-    card.onclick = () => { state.discIndex = i; renderMain(); };
-    discsRow.appendChild(card);
-  });
-  wrap.appendChild(discsRow);
+    const discsRow = document.createElement('div');
+    discsRow.className = 'discs-row';
+    album.discs.forEach((disc, i) => {
+      const card = document.createElement('div');
+      card.className = 'disc-card' + (i === state.discIndex ? ' active' : '');
+      card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>') +
+        '<div class="name">' + disc.name + '</div>';
+      card.onclick = () => { state.discIndex = i; renderMain(); };
+      discsRow.appendChild(card);
+    });
+    wrap.appendChild(discsRow);
+  }
 
   const trackWrap = document.createElement('div');
   trackWrap.className = 'disc-tracklist';
@@ -481,7 +455,7 @@ function renderMultiDiscAlbum(album){
     row.className = 'track';
     row.dataset.idx = i;
     row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>';
-    row.onclick = () => playDiscTrack(currentDisc.tracks, album.title + ' — ' + currentDisc.name, i);
+    row.onclick = () => playDiscTrack(currentDisc.tracks, album.multiDisc ? (album.title + ' — ' + currentDisc.name) : album.title, i);
     trackWrap.appendChild(row);
   });
   wrap.appendChild(trackWrap);
@@ -532,12 +506,6 @@ const nowAlbum = document.getElementById('nowAlbum');
 const progressBar = document.getElementById('progressBar');
 const haloRing = document.querySelector('.halo-ring');
 
-function playAlbumTrack(album, idx){
-  state.queue = album.tracks;
-  state.qIndex = idx;
-  state.currentAlbumTitle = album.title;
-  loadAndPlay();
-}
 function loadAndPlay(){
   const track = state.queue[state.qIndex];
   if (!track) return;
