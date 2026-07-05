@@ -1,4 +1,4 @@
-const CACHE = 'antelia-shell-v2';
+const CACHE = 'antelia-shell-v3';
 const SHELL = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
