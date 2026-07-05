@@ -441,8 +441,7 @@ function renderAlbumView(album){
     album.discs.forEach((disc, i) => {
       const card = document.createElement('div');
       card.className = 'disc-card' + (i === state.discIndex ? ' active' : '');
-      card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>') +
-        '<div class="name">' + disc.name + '</div>';
+      card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>');
       card.onclick = () => { state.discIndex = i; renderMain(); };
       discsRow.appendChild(card);
     });
