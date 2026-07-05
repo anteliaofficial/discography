@@ -101,6 +101,17 @@
   .track .t{ flex:1; font-size:14px; }
   .track.playing .t, .track.playing .n{ color:var(--accent); }
 
+  .discs-row{ display:flex; gap:12px; overflow-x:auto; padding:4px 2px 18px; scrollbar-width:none; }
+  .discs-row::-webkit-scrollbar{ display:none; }
+  .disc-card{ flex:0 0 auto; width:96px; cursor:pointer; opacity:.5; transform:scale(.9); transition:all .25s ease; }
+  .disc-card.active{ opacity:1; transform:scale(1); }
+  .disc-card img, .disc-card .halo-placeholder{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; border:1px solid var(--line); display:block; }
+  .disc-card .halo-placeholder{ background:linear-gradient(160deg,#1c1c22,#0a0a0d); }
+  .disc-card .name{ font-size:10.5px; color:var(--ink-dim); margin-top:6px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .disc-tracklist{ animation: discIn .3s ease; }
+  @keyframes discIn{ from{ opacity:0; transform:translateX(14px); } to{ opacity:1; transform:translateX(0); } }
+  .album-title-multi{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 16px; }
+
   .player{
     position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--bg-raised); border-top:1px solid var(--line);
     padding:10px 16px; display:flex; align-items:center; gap:14px; transform:translateY(110%); transition:transform .3s ease;
@@ -202,10 +213,37 @@ function parseTrackName(name){
 
 async function buildAlbum(folder){
   const contents = await driveList(folder.id);
-  const tracks = contents.filter(isAudio).map(f => {
+  const directTracks = contents.filter(isAudio).map(f => {
     const parsed = parseTrackName(f.name);
     return { n: parsed.n, title: parsed.title, id: f.id };
   }).sort((a, b) => a.n - b.n);
+
+  const subfolders = contents.filter(f => isFolder(f) && f.name.toLowerCase() !== 'cover art');
+  const { title, date } = parseAlbumName(folder.name);
+
+  if (directTracks.length === 0 && subfolders.length > 0){
+    const discs = [];
+    for (const sub of subfolders){
+      const subContents = await driveList(sub.id);
+      const tracks = subContents.filter(isAudio).map(f => {
+        const parsed = parseTrackName(f.name);
+        return { n: parsed.n, title: parsed.title, id: f.id };
+      }).sort((a, b) => a.n - b.n);
+
+      let discCover = null;
+      const subCoverFolder = subContents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
+      if (subCoverFolder){
+        const coverFiles = await driveList(subCoverFolder.id);
+        const img = coverFiles.find(isImage);
+        if (img) discCover = driveImg(img.id);
+      } else {
+        const img = subContents.find(isImage);
+        if (img) discCover = driveImg(img.id);
+      }
+      discs.push({ name: sub.name, cover: discCover, tracks });
+    }
+    return { title, date, multiDisc: true, discs, cover: (discs.find(d => d.cover) || {}).cover || null, tracks: [] };
+  }
 
   let cover = null;
   const coverFolder = contents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
@@ -217,9 +255,7 @@ async function buildAlbum(folder){
     const img = contents.find(isImage);
     if (img) cover = driveImg(img.id);
   }
-
-  const { title, date } = parseAlbumName(folder.name);
-  return { title, date, cover, tracks };
+  return { title, date, cover, tracks: directTracks, multiDisc: false };
 }
 
 async function buildCatalog(){
@@ -304,7 +340,8 @@ function renderMain(){
   main.innerHTML = '';
   if (!state.project || !state.category) return;
   if (state.album){
-    renderAlbum(state.album);
+    if (state.album.multiDisc) renderMultiDiscAlbum(state.album);
+    else renderAlbum(state.album);
     countLabel.textContent = '';
     sortBtn.style.display = 'none';
     return;
@@ -322,7 +359,8 @@ function renderMain(){
   const grid = document.createElement('div');
   grid.className = 'grid';
   items.forEach(item => {
-    const hasTracks = item.tracks && item.tracks.length > 0;
+    const hasTracks = (item.tracks && item.tracks.length > 0) ||
+      (item.multiDisc && item.discs && item.discs.some(d => d.tracks.length > 0));
     const card = document.createElement('div');
     card.className = 'card' + (hasTracks ? '' : ' empty');
     const cover = document.createElement('div');
@@ -343,7 +381,7 @@ function renderMain(){
       (item.date ? '<div class="date">' + item.date + '</div>' : '');
     card.appendChild(cover);
     card.appendChild(meta);
-    if (hasTracks) card.onclick = () => { state.album = item; renderAll(); };
+    if (hasTracks) card.onclick = () => { state.album = item; state.discIndex = 0; renderAll(); };
     grid.appendChild(card);
   });
   main.appendChild(grid);
@@ -364,7 +402,15 @@ function renderAlbum(album){
     '<div class="info"><div class="title">' + album.title + '</div><div class="date">' + album.date + '</div></div>';
   wrap.appendChild(head);
 
+  let lastDisc = null;
   album.tracks.forEach((tr, i) => {
+    if (album.multiDisc && tr.discName !== lastDisc){
+      const discHead = document.createElement('div');
+      discHead.style.cssText = 'margin:18px 0 6px;font-size:11px;letter-spacing:0.6px;text-transform:uppercase;color:var(--ink-dim)';
+      discHead.textContent = tr.discName;
+      wrap.appendChild(discHead);
+      lastDisc = tr.discName;
+    }
     const row = document.createElement('div');
     row.className = 'track';
     row.dataset.idx = i;
@@ -373,6 +419,58 @@ function renderAlbum(album){
     wrap.appendChild(row);
   });
   main.appendChild(wrap);
+}
+
+function renderMultiDiscAlbum(album){
+  if (typeof state.discIndex !== 'number') state.discIndex = 0;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tracklist';
+
+  const back = document.createElement('button');
+  back.className = 'back-btn';
+  back.innerHTML = '← volver';
+  back.onclick = () => { state.album = null; state.discIndex = 0; renderAll(); };
+  wrap.appendChild(back);
+
+  const albumTitle = document.createElement('div');
+  albumTitle.className = 'album-title-multi';
+  albumTitle.textContent = album.title;
+  wrap.appendChild(albumTitle);
+
+  const discsRow = document.createElement('div');
+  discsRow.className = 'discs-row';
+  album.discs.forEach((disc, i) => {
+    const card = document.createElement('div');
+    card.className = 'disc-card' + (i === state.discIndex ? ' active' : '');
+    card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>') +
+      '<div class="name">' + disc.name + '</div>';
+    card.onclick = () => { state.discIndex = i; renderMain(); };
+    discsRow.appendChild(card);
+  });
+  wrap.appendChild(discsRow);
+
+  const currentDisc = album.discs[state.discIndex];
+  const trackWrap = document.createElement('div');
+  trackWrap.className = 'disc-tracklist';
+  currentDisc.tracks.forEach((tr, i) => {
+    const row = document.createElement('div');
+    row.className = 'track';
+    row.dataset.idx = i;
+    row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>';
+    row.onclick = () => playDiscTrack(currentDisc.tracks, album.title + ' — ' + currentDisc.name, i);
+    trackWrap.appendChild(row);
+  });
+  wrap.appendChild(trackWrap);
+
+  main.appendChild(wrap);
+}
+
+function playDiscTrack(tracks, label, idx){
+  state.queue = tracks;
+  state.qIndex = idx;
+  state.currentAlbumTitle = label;
+  loadAndPlay();
 }
 
 function renderAll(){
