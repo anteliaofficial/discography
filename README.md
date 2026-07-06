@@ -72,7 +72,6 @@ editando `CACHE_TTL_MS` en el código si prefieres que se actualice más seguido
 - El streaming de audio sigue usando enlaces directos de Drive
   (`drive.google.com/uc?export=download`), con el mismo riesgo ya conocido de
   límites de descarga si un archivo se reproduce muchísimo en poco tiempo.
-  
 - Si algún día el catálogo crece mucho (cientos de álbumes), esta app tardará
   más en cargar la primera vez, porque recorre carpeta por carpeta. En ese caso
   conviene pasar a un catálogo pre-generado por un script periódico en vez de
