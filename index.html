@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Sora:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #0a0a0d;
@@ -24,7 +24,7 @@
   html,body{ margin:0; padding:0; height:100%; }
   body{
     background:var(--bg); color:var(--ink);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Sora', sans-serif;
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
   }
@@ -38,9 +38,10 @@
     background:rgba(10,10,13,0.92); backdrop-filter:blur(10px);
     display:flex; justify-content:space-between; align-items:flex-start;
   }
-  header.top h1{ font-family:'Fraunces', serif; font-weight:500; font-size:22px; letter-spacing:0.3px; margin:0 0 2px; }
+  header.top h1{ font-family:'Cinzel Decorative', serif; font-weight:700; font-size:22px; letter-spacing:0.3px; margin:0 0 2px; }
   header.top p{ margin:0; font-size:12px; color:var(--ink-dim); letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
-  .rec-dot{ width:7px; height:7px; border-radius:50%; background:#ff3b3b; display:inline-block; position:relative; top:1px; animation:recPulse 1.4s infinite ease-in-out; }
+  .rec-dot{ width:7px; height:7px; border-radius:50%; background:#ff3b3b; display:inline-block; vertical-align:middle; margin-bottom:2px; animation:recPulse 1.4s infinite ease-in-out; }
+  .on-air-text{ font-size:0.75em; font-weight:400; }
   @keyframes recPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.25; } }
   .refresh-btn{
     background:none; border:1px solid var(--line); color:var(--ink-dim);
@@ -94,7 +95,7 @@
   .back-btn{ background:none; border:none; color:var(--ink-dim); font-size:13px; cursor:pointer; padding:0; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
   .album-head{ display:flex; gap:16px; align-items:flex-end; margin-bottom:20px; }
   .album-head img{ width:96px; height:96px; object-fit:cover; border-radius:8px; border:1px solid var(--line); }
-  .album-head .info .title{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 4px; }
+  .album-head .info .title{ font-family:'Sora', sans-serif; font-weight:500; font-size:22px; margin:0 0 4px; }
   .album-head .info .date{ font-size:12px; color:var(--ink-dim); font-family:'IBM Plex Mono', monospace; }
 
   .track{ display:flex; align-items:center; gap:14px; padding:11px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
@@ -112,7 +113,7 @@
   .disc-card .name{ font-size:10.5px; line-height:1.35; color:var(--ink-dim); margin-top:6px; text-align:center; }
   .disc-tracklist{ animation: discIn .3s ease; }
   @keyframes discIn{ from{ opacity:0; transform:translateX(14px); } to{ opacity:1; transform:translateX(0); } }
-  .album-title-multi{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 2px; }
+  .album-title-multi{ font-family:'Sora', sans-serif; font-weight:500; font-size:22px; margin:0 0 2px; }
   .disc-name-active{ font-size:13px; color:var(--ink-dim); margin:0 0 16px; }
   .solo-cover{ width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:8px; }
 
@@ -149,8 +150,8 @@
 <div class="app">
   <header class="top">
     <div>
-      <h1>The Anti™ Radio</h1>
-      <p id="subtitle"><span class="rec-dot"></span>On Air</p>
+      <h1>The Anti™ Radio <span class="rec-dot"></span> <span class="on-air-text">On Air</span></h1>
+      <p id="subtitle">The Antelia™ Experience</p>
     </div>
     <button class="refresh-btn" id="refreshBtn">Actualizar catálogo</button>
   </header>
