@@ -133,11 +133,14 @@
 
   footer.credit{ text-align:center; padding:24px 20px 90px; font-size:11px; color:var(--ink-dim); }
 
-  .lightbox{ position:fixed; inset:0; background:rgba(5,5,7,0.92); z-index:50; display:none; align-items:center; justify-content:center; padding:32px; }
+  .lightbox{ position:fixed; inset:0; background:rgba(5,5,7,0.92); z-index:50; display:none; flex-direction:column; align-items:center; justify-content:center; padding:32px; gap:14px; }
   .lightbox.visible{ display:flex; }
-  .lightbox img{ max-width:90vw; max-height:85vh; width:auto; height:auto; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  .lightbox img{ max-width:90vw; max-height:80vh; width:auto; height:auto; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
   .lightbox-close{ position:absolute; top:18px; right:20px; background:none; border:none; color:var(--ink); font-size:30px; line-height:1; cursor:pointer; padding:6px; }
   .lightbox-close:hover{ color:var(--accent); }
+  .lightbox-nav{ display:flex; gap:28px; }
+  .lightbox-arrow{ background:none; border:none; color:var(--ink-dim); font-size:14px; cursor:pointer; padding:6px 10px; transition:color .15s ease; }
+  .lightbox-arrow:hover{ color:var(--accent); }
 </style>
 </head>
 <body>
@@ -181,6 +184,10 @@
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightboxClose" aria-label="Cerrar">&times;</button>
   <img id="lightboxImg" src="" alt="Portada ampliada">
+  <div class="lightbox-nav" id="lightboxNav">
+    <button class="lightbox-arrow" id="lightboxPrev" aria-label="Anterior">◀</button>
+    <button class="lightbox-arrow" id="lightboxNext" aria-label="Siguiente">▶</button>
+  </div>
 </div>
 
 <script>
@@ -240,6 +247,13 @@ function parseTrackName(name){
   return { n: 0, title: name.replace(/\.mp3$/i, '') };
 }
 
+function buildCoverSet(imageFiles){
+  if (!imageFiles.length) return { cover: null, images: [] };
+  const best = pickCoverImage(imageFiles);
+  const ordered = [best, ...imageFiles.filter(f => f.id !== best.id)];
+  return { cover: driveImg(best.id), images: ordered.map(f => driveImg(f.id)) };
+}
+
 async function buildAlbum(folder){
   const contents = await driveList(folder.id);
   const directTracks = contents.filter(isAudio).map(f => {
@@ -260,31 +274,25 @@ async function buildAlbum(folder){
       }).sort((a, b) => a.n - b.n);
 
       let discCover = null;
+      let discImages = [];
       const subCoverFolder = subContents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
-      if (subCoverFolder){
-        const coverFiles = await driveList(subCoverFolder.id);
-        const img = pickCoverImage(coverFiles.filter(isImage));
-        if (img) discCover = driveImg(img.id);
-      } else {
-        const img = pickCoverImage(subContents.filter(isImage));
-        if (img) discCover = driveImg(img.id);
-      }
-      discs.push({ name: sub.name, cover: discCover, tracks });
+      const subCoverFiles = subCoverFolder
+        ? (await driveList(subCoverFolder.id)).filter(isImage)
+        : subContents.filter(isImage);
+      ({ cover: discCover, images: discImages } = buildCoverSet(subCoverFiles));
+      discs.push({ name: sub.name, cover: discCover, images: discImages, tracks });
     }
     return { title, date, multiDisc: true, discs, cover: discs[0]?.cover || (discs.find(d => d.cover) || {}).cover || null, tracks: [] };
   }
 
   let cover = null;
+  let images = [];
   const coverFolder = contents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
-  if (coverFolder){
-    const coverFiles = await driveList(coverFolder.id);
-    const img = pickCoverImage(coverFiles.filter(isImage));
-    if (img) cover = driveImg(img.id);
-  } else {
-    const img = pickCoverImage(contents.filter(isImage));
-    if (img) cover = driveImg(img.id);
-  }
-  return { title, date, cover, tracks: directTracks, multiDisc: false, discs: [{ name: title, cover, tracks: directTracks }] };
+  const coverFiles = coverFolder
+    ? (await driveList(coverFolder.id)).filter(isImage)
+    : contents.filter(isImage);
+  ({ cover, images } = buildCoverSet(coverFiles));
+  return { title, date, cover, images, tracks: directTracks, multiDisc: false, discs: [{ name: title, cover, images, tracks: directTracks }] };
 }
 
 async function buildCatalog(){
@@ -468,7 +476,7 @@ function renderAlbumView(album){
       card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>');
       card.onclick = () => {
         if (i === state.discIndex){
-          if (disc.cover) openLightbox(disc.cover);
+          if (disc.cover) openLightbox(disc.images, 0);
         } else {
           state.discIndex = i;
           renderMain();
@@ -482,7 +490,7 @@ function renderAlbumView(album){
     soloCover.className = 'solo-cover';
     soloCover.style.cursor = 'pointer';
     soloCover.src = currentDisc.cover;
-    soloCover.onclick = () => openLightbox(currentDisc.cover);
+    soloCover.onclick = () => openLightbox(currentDisc.images, 0);
     wrap.appendChild(soloCover);
   }
 
@@ -586,17 +594,43 @@ if ('serviceWorker' in navigator){
 /* Lightbox */
 const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightboxImg');
-function openLightbox(src){
-  lightboxImg.src = src;
+const lightboxNav = document.getElementById('lightboxNav');
+let lightboxImages = [];
+let lightboxIndex = 0;
+
+function openLightbox(images, startIndex){
+  lightboxImages = (images && images.length) ? images : [];
+  lightboxIndex = startIndex >= 0 ? startIndex : 0;
+  renderLightbox();
   lightbox.classList.add('visible');
+}
+function renderLightbox(){
+  if (!lightboxImages.length) return;
+  lightboxImg.src = lightboxImages[lightboxIndex];
+  lightboxNav.style.display = lightboxImages.length > 1 ? 'flex' : 'none';
+}
+function lightboxPrevImg(){
+  lightboxIndex = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+  renderLightbox();
+}
+function lightboxNextImg(){
+  lightboxIndex = (lightboxIndex + 1) % lightboxImages.length;
+  renderLightbox();
 }
 function closeLightbox(){
   lightbox.classList.remove('visible');
   lightboxImg.src = '';
 }
 document.getElementById('lightboxClose').onclick = closeLightbox;
+document.getElementById('lightboxPrev').onclick = lightboxPrevImg;
+document.getElementById('lightboxNext').onclick = lightboxNextImg;
 lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if (!lightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lightboxPrevImg();
+  if (e.key === 'ArrowRight') lightboxNextImg();
+});
 
 /* Arranque */
 (async () => {
