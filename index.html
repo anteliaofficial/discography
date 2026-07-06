@@ -325,6 +325,19 @@ const sortBtn = document.getElementById('sortBtn');
 const subtitle = document.getElementById('subtitle');
 const refreshBtn = document.getElementById('refreshBtn');
 
+const CATEGORY_PRIORITY = ['albums', 'singles', 'extended', 'lives', 'collabs', 'specials'];
+
+function sortedCategoryKeys(project){
+  const cats = CATALOG[project].categories;
+  return Object.keys(cats).sort((a, b) => {
+    const rankA = CATEGORY_PRIORITY.indexOf(cats[a].label.toLowerCase());
+    const rankB = CATEGORY_PRIORITY.indexOf(cats[b].label.toLowerCase());
+    const ra = rankA === -1 ? CATEGORY_PRIORITY.length : rankA;
+    const rb = rankB === -1 ? CATEGORY_PRIORITY.length : rankB;
+    return ra - rb;
+  });
+}
+
 function renderProjects(){
   projectNav.innerHTML = '';
   Object.keys(CATALOG).forEach(key => {
@@ -333,7 +346,7 @@ function renderProjects(){
     btn.textContent = CATALOG[key].label;
     btn.onclick = () => {
       state.project = key;
-      state.category = Object.keys(CATALOG[key].categories)[0] || null;
+      state.category = sortedCategoryKeys(key)[0] || null;
       state.album = null;
       renderAll();
     };
@@ -345,7 +358,7 @@ function renderCategories(){
   categoryNav.innerHTML = '';
   if (!state.project) return;
   const cats = CATALOG[state.project].categories;
-  Object.keys(cats).forEach(key => {
+  sortedCategoryKeys(state.project).forEach(key => {
     const btn = document.createElement('button');
     btn.className = 'cat-btn' + (state.category === key ? ' active' : '');
     btn.textContent = cats[key].label;
@@ -559,7 +572,7 @@ if ('serviceWorker' in navigator){
   try {
     CATALOG = await getCatalog(false);
     state.project = Object.keys(CATALOG)[0];
-    state.category = Object.keys(CATALOG[state.project].categories)[0];
+    state.category = sortedCategoryKeys(state.project)[0];
     subtitle.textContent = 'Discografía completa · Mauro Fuentes · catálogo en vivo';
     renderAll();
   } catch(e){
