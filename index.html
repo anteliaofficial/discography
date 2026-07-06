@@ -74,10 +74,9 @@
   main{ flex:1; padding:6px 20px 20px; }
 
   .state-msg{ text-align:center; padding:60px 20px; color:var(--ink-dim); font-size:13px; }
-  .state-msg .dot{ display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); margin:0 4px; animation:pulse 1.2s infinite ease-in-out; }
-  .state-msg .dot:nth-child(2){ animation-delay:.2s; }
-  .state-msg .dot:nth-child(3){ animation-delay:.4s; }
-  @keyframes pulse{ 0%,100%{opacity:.2} 50%{opacity:1} }
+  .hex-halo{ width:52px; height:52px; border-radius:50%; padding:5px; margin:0 auto 18px; background:conic-gradient(from 0deg, #ff3b6b, #ffcf3b, #3bff8f, #3bd4ff, #a13bff, #ff3b6b); animation:hexSpin 1.3s linear infinite; }
+  .hex-halo-inner{ width:100%; height:100%; border-radius:50%; background:var(--bg); }
+  @keyframes hexSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
 
   .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:16px; margin-top:10px; }
   .card{ cursor:pointer; border-radius:10px; overflow:hidden; background:var(--bg-raised); border:1px solid var(--line); transition:transform .15s ease, border-color .15s ease; }
@@ -164,7 +163,7 @@
     <button class="sort-btn" id="sortBtn">Más reciente</button>
   </div>
 
-  <main id="main"><div class="state-msg">Cargando discografía desde Drive<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div></main>
+  <main id="main"><div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Dialing into the HEX...</div></main>
 
   <footer class="credit">Antelia · The Complete Discography of Mauro Fuentes</footer>
 </div>
