@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Antelia™ Experience — Discografía</title>
+<title>The Anti™ Radio</title>
 <meta name="theme-color" content="#0a0a0d">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +39,9 @@
     display:flex; justify-content:space-between; align-items:flex-start;
   }
   header.top h1{ font-family:'Fraunces', serif; font-weight:500; font-size:22px; letter-spacing:0.3px; margin:0 0 2px; }
-  header.top p{ margin:0; font-size:12px; color:var(--ink-dim); letter-spacing:0.5px; }
+  header.top p{ margin:0; font-size:12px; color:var(--ink-dim); letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+  .rec-dot{ width:7px; height:7px; border-radius:50%; background:#ff3b3b; display:inline-block; position:relative; top:1px; animation:recPulse 1.4s infinite ease-in-out; }
+  @keyframes recPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.25; } }
   .refresh-btn{
     background:none; border:1px solid var(--line); color:var(--ink-dim);
     font-size:11px; letter-spacing:0.4px; text-transform:uppercase;
@@ -147,8 +149,8 @@
 <div class="app">
   <header class="top">
     <div>
-      <h1>The Antelia™ Experience</h1>
-      <p id="subtitle">Discografía completa · Mauro Fuentes</p>
+      <h1>The Anti™ Radio</h1>
+      <p id="subtitle"><span class="rec-dot"></span>On Air</p>
     </div>
     <button class="refresh-btn" id="refreshBtn">Actualizar catálogo</button>
   </header>
@@ -642,7 +644,6 @@ document.addEventListener('keydown', (e) => {
     CATALOG = await getCatalog(false);
     state.project = Object.keys(CATALOG)[0];
     state.category = sortedCategoryKeys(state.project)[0];
-    subtitle.textContent = 'Discografía completa · Mauro Fuentes · catálogo en vivo';
     renderAll();
   } catch(e){
     main.innerHTML = '<div class="state-msg">No se pudo cargar el catálogo.<br>' + e.message + '</div>';
