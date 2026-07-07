@@ -40,8 +40,9 @@
   }
   header.top h1{ font-family:'Cinzel Decorative', serif; font-weight:700; font-size:22px; letter-spacing:0.3px; margin:0 0 2px; }
   header.top p{ margin:0; font-size:12px; color:var(--ink-dim); letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
-  .rec-dot{ width:7px; height:7px; border-radius:50%; background:#ff3b3b; display:inline-block; vertical-align:baseline; position:relative; top:5px; margin:0 4px 0 10px; animation:recPulse 1.4s infinite ease-in-out; }
-  .on-air-text{ font-size:0.75em; font-family:'Sora', sans-serif; font-weight:400; }
+  .on-air-group{ display:inline-flex; align-items:center; gap:6px; margin-left:10px; }
+  .rec-dot{ width:9px; height:9px; border-radius:50%; background:#ff3b3b; flex:0 0 auto; animation:recPulse 1.4s infinite ease-in-out; }
+  .on-air-text{ font-size:0.75em; font-family:'Sora', sans-serif; font-weight:400; color:var(--ink-dim); }
   @keyframes recPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.25; } }
   .refresh-btn{
     background:none; border:1px solid var(--line); color:var(--ink-dim);
@@ -149,10 +150,10 @@
 <div class="app">
   <header class="top">
     <div>
-      <h1>The Anti™ Radio <span class="rec-dot"></span> <span class="on-air-text">On Air</span></h1>
+      <h1>The Anti™ Radio <span class="on-air-group"><span class="rec-dot"></span><span class="on-air-text">On Air</span></span></h1>
       <p id="subtitle">The Antelia™ Experience</p>
     </div>
-    <button class="refresh-btn" id="refreshBtn">Refresh catalog</button>
+    <button class="refresh-btn" id="refreshBtn">Retune</button>
   </header>
 
   <nav class="projects" id="projectNav"></nav>
@@ -405,7 +406,7 @@ function renderMain(){
     if (!b.date) return -1;
     return state.sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
   });
-  countLabel.textContent = items.length + (items.length === 1 ? ' title' : ' titles');
+  countLabel.textContent = items.length + (items.length === 1 ? ' release' : ' releases');
 
   const grid = document.createElement('div');
   grid.className = 'grid';
@@ -531,8 +532,9 @@ sortBtn.onclick = () => {
 };
 
 refreshBtn.onclick = async () => {
-  refreshBtn.textContent = 'Refreshing…';
+  refreshBtn.textContent = 'Retuning…';
   refreshBtn.disabled = true;
+  main.innerHTML = '<div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Retuning into the HEX...</div>';
   try {
     CATALOG = await getCatalog(true);
     if (!state.project || !CATALOG[state.project]) state.project = Object.keys(CATALOG)[0];
@@ -540,7 +542,7 @@ refreshBtn.onclick = async () => {
   } catch(e){
     main.innerHTML = '<div class="state-msg">Could not refresh: ' + e.message + '</div>';
   }
-  refreshBtn.textContent = 'Refresh catalog';
+  refreshBtn.textContent = 'Retune';
   refreshBtn.disabled = false;
 };
 
