@@ -248,6 +248,25 @@ function parseTrackName(name){
   return { n: 0, title: name.replace(/\.mp3$/i, '') };
 }
 
+async function mapLimit(items, limit, fn){
+  const results = new Array(items.length);
+  let index = 0;
+  async function worker(){
+    while (index < items.length){
+      const current = index++;
+      try {
+        results[current] = await fn(items[current], current);
+      } catch(e){
+        console.error('mapLimit item failed:', items[current] && items[current].name, e);
+        results[current] = null;
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 function buildCoverSet(imageFiles){
   if (!imageFiles.length) return { cover: null, images: [] };
   const best = pickCoverImage(imageFiles);
@@ -266,8 +285,7 @@ async function buildAlbum(folder){
   const { title, date } = parseAlbumName(folder.name);
 
   if (directTracks.length === 0 && subfolders.length > 0){
-    const discs = [];
-    for (const sub of subfolders){
+    const discResults = await mapLimit(subfolders, 5, async (sub) => {
       const subContents = await driveList(sub.id);
       const tracks = subContents.filter(isAudio).map(f => {
         const parsed = parseTrackName(f.name);
@@ -281,8 +299,9 @@ async function buildAlbum(folder){
         ? (await driveList(subCoverFolder.id)).filter(isImage)
         : subContents.filter(isImage);
       ({ cover: discCover, images: discImages } = buildCoverSet(subCoverFiles));
-      discs.push({ name: sub.name, cover: discCover, images: discImages, tracks });
-    }
+      return { name: sub.name, cover: discCover, images: discImages, tracks };
+    });
+    const discs = discResults.filter(Boolean);
     return { title, date, multiDisc: true, discs, cover: discs[0]?.cover || null, tracks: [] };
   }
 
@@ -299,19 +318,20 @@ async function buildAlbum(folder){
 async function buildCatalog(){
   const projects = await driveList(ROOT_FOLDER_ID);
   const catalog = {};
-  for (const proj of projects.filter(isFolder)){
+
+  await mapLimit(projects.filter(isFolder), 3, async (proj) => {
     const categories = await driveList(proj.id);
     const catObj = {};
-    for (const cat of categories.filter(isFolder)){
+
+    await mapLimit(categories.filter(isFolder), 3, async (cat) => {
       const albumFolders = await driveList(cat.id);
-      const items = [];
-      for (const alb of albumFolders.filter(isFolder)){
-        items.push(await buildAlbum(alb));
-      }
-      catObj[cat.id] = { label: cat.name.replace(/^The\s+/i, ''), items };
-    }
+      const items = await mapLimit(albumFolders.filter(isFolder), 5, (alb) => buildAlbum(alb));
+      catObj[cat.id] = { label: cat.name.replace(/^The\s+/i, ''), items: items.filter(Boolean) };
+    });
+
     catalog[proj.id] = { label: proj.name, categories: catObj };
-  }
+  });
+
   return catalog;
 }
 
