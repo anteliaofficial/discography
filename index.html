@@ -122,11 +122,14 @@
   .player .info{ flex:1; min-width:0; }
   .player .info .t{ font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .player .info .a{ font-size:11px; color:var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .player .time{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-dim); flex:0 0 auto; white-space:nowrap; }
   .player .ctrl{ display:flex; gap:10px; align-items:center; }
   .player .ctrl button{ background:none; border:none; color:var(--ink); cursor:pointer; padding:4px; }
   .player .ctrl button svg{ width:18px; height:18px; fill:var(--ink-dim); }
   .player .ctrl button:hover svg{ fill:var(--ink); }
-  .progress-bar{ position:absolute; top:-1px; left:0; height:2px; background:var(--accent); width:0%; }
+  .seek-bar{ position:absolute; top:-8px; left:0; right:0; height:16px; cursor:pointer; }
+  .progress-bar{ position:absolute; top:7px; left:0; height:2px; background:var(--accent); width:0%; pointer-events:none; }
+  .seek-bar:hover .progress-bar{ height:3px; top:6.5px; }
 
   footer.credit{ text-align:center; padding:24px 20px 90px; font-size:11px; color:var(--ink-dim); }
 
@@ -164,12 +167,13 @@
 </div>
 
 <div class="player" id="player">
-  <div class="progress-bar" id="progressBar"></div>
+  <div class="seek-bar" id="seekBar"><div class="progress-bar" id="progressBar"></div></div>
   <div class="halo-ring" id="playToggle"><div class="inner"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
   <div class="info">
     <div class="t" id="nowTitle">—</div>
     <div class="a" id="nowAlbum">Tap a track to begin</div>
   </div>
+  <div class="time" id="timeDisplay">0:00 / 0:00</div>
   <div class="ctrl">
     <button id="prevBtn" title="Previous"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
     <button id="nextBtn" title="Next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
@@ -547,6 +551,8 @@ const playToggle = document.getElementById('playToggle');
 const playIcon = document.getElementById('playIcon');
 const nowTitle = document.getElementById('nowTitle');
 const nowAlbum = document.getElementById('nowAlbum');
+const timeDisplay = document.getElementById('timeDisplay');
+const seekBar = document.getElementById('seekBar');
 const progressBar = document.getElementById('progressBar');
 const haloRing = document.querySelector('.halo-ring');
 
@@ -557,6 +563,9 @@ function loadAndPlay(){
   audio.play().catch(()=>{});
   nowTitle.textContent = track.title;
   nowAlbum.textContent = state.currentAlbumTitle;
+  timeDisplay.textContent = '0:00 / 0:00';
+  progressBar.style.width = '0%';
+  haloRing.style.setProperty('--pct', 0);
   player.classList.add('visible');
   updatePlayIcon(true);
   highlightPlayingRow(state.qIndex);
@@ -576,14 +585,36 @@ playToggle.onclick = () => {
 document.getElementById('prevBtn').onclick = () => { if (state.qIndex > 0){ state.qIndex--; loadAndPlay(); } };
 document.getElementById('nextBtn').onclick = () => { if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); } };
 audio.addEventListener('ended', () => {
-  if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); } else { updatePlayIcon(false); }
+  state.qIndex = state.qIndex < state.queue.length - 1 ? state.qIndex + 1 : 0;
+  loadAndPlay();
 });
 audio.addEventListener('timeupdate', () => {
   if (!audio.duration) return;
   const pct = (audio.currentTime / audio.duration) * 100;
   progressBar.style.width = pct + '%';
   haloRing.style.setProperty('--pct', pct.toFixed(1));
+  timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
 });
+
+function formatTime(sec){
+  if (!isFinite(sec) || sec < 0) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+let seeking = false;
+function seekFromEvent(e){
+  if (!audio.duration) return;
+  const rect = seekBar.getBoundingClientRect();
+  const pct = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+  audio.currentTime = pct * audio.duration;
+  progressBar.style.width = (pct * 100) + '%';
+  haloRing.style.setProperty('--pct', (pct * 100).toFixed(1));
+}
+seekBar.addEventListener('pointerdown', (e) => { seeking = true; seekFromEvent(e); });
+window.addEventListener('pointermove', (e) => { if (seeking) seekFromEvent(e); });
+window.addEventListener('pointerup', () => { seeking = false; });
 
 if ('serviceWorker' in navigator){
   window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); });
