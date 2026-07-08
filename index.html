@@ -135,9 +135,8 @@
 
   .reel-section{ padding:36px 20px 20px; border-top:1px solid var(--line); margin-top:20px; opacity:0; transition:opacity .6s ease; }
   .reel-section.visible{ opacity:1; }
-  .reel-label{ text-align:center; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:14px; }
-  .reel-label-row{ display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
-  .reel-label-row .reel-label{ margin-bottom:0; }
+  .reel-label{ text-align:center; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:8px; }
+  .reel-direction-row{ display:flex; justify-content:center; margin-bottom:14px; }
   .reel-direction-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); font-size:10px; letter-spacing:0.3px; text-transform:uppercase; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:'Sora', sans-serif; }
   .reel-direction-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
   .reel-viewport{ position:relative; height:170px; overflow:hidden; max-width:560px; margin:0 auto; touch-action:none; cursor:default; }
@@ -180,9 +179,9 @@
   <main id="main"><div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Dialing into the HEX...</div></main>
 
   <section class="reel-section" id="reelSection" style="display:none">
-    <div class="reel-label-row">
-      <div class="reel-label">Spin the Cylinder</div>
-      <button class="reel-direction-btn" id="reelDirectionBtn">Newest → Oldest</button>
+    <div class="reel-label">Spin the Cylinder</div>
+    <div class="reel-direction-row">
+      <button class="reel-direction-btn" id="reelDirectionBtn">Spin Back</button>
     </div>
     <div class="reel-viewport" id="reelViewport">
       <div class="reel-fade reel-fade-top"></div>
@@ -729,7 +728,7 @@ const reelTrack = document.getElementById('reelTrack');
 const reelDirectionBtn = document.getElementById('reelDirectionBtn');
 reelDirectionBtn.onclick = () => {
   state.chronoStep = state.chronoStep === 1 ? -1 : 1;
-  reelDirectionBtn.textContent = state.chronoStep === 1 ? 'Newest → Oldest' : 'Oldest → Newest';
+  reelDirectionBtn.textContent = state.chronoStep === 1 ? 'Spin Back' : 'Spin Forward';
 };
 const ROW_H = 34;
 const VISIBLE_ROWS = 5;
