@@ -786,10 +786,19 @@ function retreatChrono(){
 
 function advanceChrono(){
   if (!reelEntries.length) return;
-  const step = state.chronoStep || 1;
-  for (let count = 1; count <= reelEntries.length; count++){
-    const idx = ((state.chronoIndex + step * count) % reelEntries.length + reelEntries.length) % reelEntries.length;
+  let dir = state.chronoStep || 1;
+  let idx = state.chronoIndex;
+  const maxAttempts = reelEntries.length * 4 + 4;
+  for (let attempts = 0; attempts < maxAttempts; attempts++){
+    idx += dir;
+    if (idx < 0 || idx >= reelEntries.length){
+      dir = -dir;
+      idx = state.chronoIndex;
+      continue;
+    }
     if (reelEntries[idx].hasTracks){
+      state.chronoStep = dir;
+      reelDirectionBtn.textContent = dir === 1 ? "Rollin' Down" : "Rollin' Up";
       playChronoFromReel(idx);
       return;
     }
