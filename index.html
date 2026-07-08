@@ -176,7 +176,7 @@
   <main id="main"><div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Dialing into the HEX...</div></main>
 
   <section class="reel-section" id="reelSection" style="display:none">
-    <div class="reel-label">The HEX Feed</div>
+    <div class="reel-label">Spin the Cylinder</div>
     <div class="reel-viewport" id="reelViewport">
       <div class="reel-fade reel-fade-top"></div>
       <div class="reel-track" id="reelTrack"></div>
@@ -380,7 +380,7 @@ async function getCatalog(forceRefresh){
    UI / estado
    ====================================================== */
 let CATALOG = null;
-let state = { project: null, category: null, album: null, sortDesc: true, queue: [], qIndex: -1, currentAlbumTitle: '' };
+let state = { project: null, category: null, album: null, sortDesc: true, queue: [], qIndex: -1, currentAlbumTitle: '', chronoMode: false, chronoIndex: -1 };
 
 const projectNav = document.getElementById('projectNav');
 const categoryNav = document.getElementById('categoryNav');
@@ -556,6 +556,7 @@ function renderAlbumView(album){
 }
 
 function playDiscTrack(tracks, label, idx){
+  state.chronoMode = false;
   state.queue = tracks;
   state.qIndex = idx;
   state.currentAlbumTitle = label;
@@ -631,8 +632,15 @@ playToggle.onclick = () => {
 document.getElementById('prevBtn').onclick = () => { if (state.qIndex > 0){ state.qIndex--; loadAndPlay(); } };
 document.getElementById('nextBtn').onclick = () => { if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); } };
 audio.addEventListener('ended', () => {
-  state.qIndex = state.qIndex < state.queue.length - 1 ? state.qIndex + 1 : 0;
-  loadAndPlay();
+  if (state.qIndex < state.queue.length - 1){
+    state.qIndex++;
+    loadAndPlay();
+  } else if (state.chronoMode){
+    advanceChrono();
+  } else {
+    state.qIndex = 0;
+    loadAndPlay();
+  }
 });
 audio.addEventListener('timeupdate', () => {
   if (!audio.duration) return;
@@ -722,6 +730,37 @@ let reelDragging = false;
 let reelDragStartY = 0;
 let reelDragStartOffset = 0;
 
+function getAllTracksForItem(item){
+  if (item.multiDisc){
+    let all = [];
+    item.discs.forEach((d) => { all = all.concat(d.tracks); });
+    return all;
+  }
+  return item.tracks || [];
+}
+
+function playChronoFromReel(index){
+  const entry = reelEntries[index];
+  if (!entry || !entry.hasTracks) return;
+  state.chronoMode = true;
+  state.chronoIndex = index;
+  state.queue = getAllTracksForItem(entry.item);
+  state.qIndex = 0;
+  state.currentAlbumTitle = entry.projectLabel + ' - ' + entry.title;
+  loadAndPlay();
+}
+
+function advanceChrono(){
+  if (!reelEntries.length) return;
+  for (let count = 1; count <= reelEntries.length; count++){
+    const idx = (state.chronoIndex + count) % reelEntries.length;
+    if (reelEntries[idx].hasTracks){
+      playChronoFromReel(idx);
+      return;
+    }
+  }
+}
+
 function buildReelEntries(){
   const entries = [];
   Object.keys(CATALOG).forEach((projKey) => {
@@ -757,6 +796,7 @@ function renderReel(){
         state.discIndex = 0;
         renderAll();
         document.querySelector('header.top').scrollIntoView({ behavior: 'smooth' });
+        playChronoFromReel(i);
       };
     } else {
       row.style.cursor = 'default';
