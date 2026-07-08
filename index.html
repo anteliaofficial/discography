@@ -181,7 +181,7 @@
   <section class="reel-section" id="reelSection" style="display:none">
     <div class="reel-label">Spin the Cylinder</div>
     <div class="reel-direction-row">
-      <button class="reel-direction-btn" id="reelDirectionBtn">Spin Back</button>
+      <button class="reel-direction-btn" id="reelDirectionBtn">Rollin' Down</button>
     </div>
     <div class="reel-viewport" id="reelViewport">
       <div class="reel-fade reel-fade-top"></div>
@@ -635,8 +635,14 @@ playToggle.onclick = () => {
   if (!audio.src) return;
   if (audio.paused){ audio.play(); updatePlayIcon(true); } else { audio.pause(); updatePlayIcon(false); }
 };
-document.getElementById('prevBtn').onclick = () => { if (state.qIndex > 0){ state.qIndex--; loadAndPlay(); } };
-document.getElementById('nextBtn').onclick = () => { if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); } };
+document.getElementById('prevBtn').onclick = () => {
+  if (state.qIndex > 0){ state.qIndex--; loadAndPlay(); }
+  else if (state.chronoMode){ retreatChrono(); }
+};
+document.getElementById('nextBtn').onclick = () => {
+  if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); }
+  else if (state.chronoMode){ advanceChrono(); }
+};
 audio.addEventListener('ended', () => {
   if (state.qIndex < state.queue.length - 1){
     state.qIndex++;
@@ -728,7 +734,7 @@ const reelTrack = document.getElementById('reelTrack');
 const reelDirectionBtn = document.getElementById('reelDirectionBtn');
 reelDirectionBtn.onclick = () => {
   state.chronoStep = state.chronoStep === 1 ? -1 : 1;
-  reelDirectionBtn.textContent = state.chronoStep === 1 ? 'Spin Back' : 'Spin Forward';
+  reelDirectionBtn.textContent = state.chronoStep === 1 ? "Rollin' Down" : "Rollin' Up";
 };
 const ROW_H = 34;
 const VISIBLE_ROWS = 5;
@@ -764,6 +770,18 @@ function playChronoFromReel(index){
   state.currentAlbumTitle = entry.projectLabel + ' - ' + entry.title;
   renderAll();
   loadAndPlay();
+}
+
+function retreatChrono(){
+  if (!reelEntries.length) return;
+  const step = state.chronoStep || 1;
+  for (let count = 1; count <= reelEntries.length; count++){
+    const idx = ((state.chronoIndex - step * count) % reelEntries.length + reelEntries.length) % reelEntries.length;
+    if (reelEntries[idx].hasTracks){
+      playChronoFromReel(idx);
+      return;
+    }
+  }
 }
 
 function advanceChrono(){
@@ -803,7 +821,6 @@ function renderReel(){
   reelEntries.forEach((entry, i) => {
     const row = document.createElement('div');
     row.className = 'reel-row';
-    row.dataset.idx = i;
     row.innerHTML = '<span class="rd">' + entry.date + '</span><span class="rt">' + entry.projectLabel + ' - ' + entry.title + '</span>';
     if (entry.hasTracks){
       row.onclick = () => {
