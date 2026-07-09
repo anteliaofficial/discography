@@ -86,7 +86,7 @@
   .card .cover img{ width:100%; height:100%; object-fit:cover; display:block; }
   .card .cover .halo{ width:40%; aspect-ratio:1/1; border-radius:50%; background:conic-gradient(from 0deg, var(--accent), var(--cool), var(--accent)); opacity:.35; filter:blur(2px); }
   .card .meta{ padding:10px 12px 12px; }
-  .card .meta .title{ font-size:13.5px; font-weight:500; line-height:1.3; margin-bottom:3px; }
+  .card .meta .title{ font-size:13.5px; font-weight:500; line-height:1.3; margin-bottom:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
   .card .meta .date{ font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono', monospace; }
   .card.empty{ opacity:.55; cursor:default; }
   .card.empty:hover{ transform:none; border-color:var(--line); }
@@ -478,7 +478,7 @@ function renderMain(){
     }
     const meta = document.createElement('div');
     meta.className = 'meta';
-    meta.innerHTML = '<div class="title">' + item.title + '</div>' +
+    meta.innerHTML = '<div class="title" title="' + item.title.replace(/"/g, '&quot;') + '">' + item.title + '</div>' +
       (item.date ? '<div class="date">' + item.date + '</div>' : '');
     card.appendChild(cover);
     card.appendChild(meta);
