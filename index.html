@@ -824,6 +824,10 @@ let lightboxVideos = [];
 let videoLightboxIndex = 0;
 
 function openVideoLightbox(videos, startIndex){
+  if (!audio.paused){
+    audio.pause();
+    updatePlayIcon(false);
+  }
   lightboxVideos = (videos && videos.length) ? videos : [];
   videoLightboxIndex = startIndex >= 0 ? startIndex : 0;
   updateVideoLightbox();
