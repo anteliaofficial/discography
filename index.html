@@ -158,6 +158,10 @@
   .lightbox-nav{ display:flex; gap:28px; }
   .lightbox-arrow{ background:none; border:none; color:var(--ink-dim); font-size:14px; cursor:pointer; padding:6px 10px; transition:color .15s ease; }
   .lightbox-arrow:hover{ color:var(--accent); }
+  .video-frame-wrap{ width:min(90vw, 800px); aspect-ratio:16/9; border-radius:10px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  .video-frame-wrap iframe{ width:100%; height:100%; border:0; display:block; }
+  .track .video-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); border-radius:50%; width:22px; height:22px; flex:0 0 auto; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:8px; }
+  .track .video-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
 </style>
 </head>
 <body>
@@ -221,6 +225,15 @@
   </div>
 </div>
 
+<div class="lightbox" id="videoLightbox">
+  <button class="lightbox-close" id="videoLightboxClose" aria-label="Close">&times;</button>
+  <div class="video-frame-wrap"><iframe id="videoLightboxFrame" src="" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>
+  <div class="lightbox-nav" id="videoLightboxNav">
+    <button class="lightbox-arrow" id="videoLightboxPrev" aria-label="Previous">◀</button>
+    <button class="lightbox-arrow" id="videoLightboxNext" aria-label="Next">▶</button>
+  </div>
+</div>
+
 <script>
 /* ======================================================
    CONFIGURACIÓN — reemplaza esto con tu propia clave
@@ -232,6 +245,11 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
 
 function driveImg(id){ return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w600'; }
 function driveAudio(id){ return 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media&key=' + API_KEY; }
+
+function youtubeEmbedUrl(url){
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+  return m ? 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&rel=0' : null;
+}
 
 async function driveList(parentId){
   const q = encodeURIComponent("'" + parentId + "' in parents and trashed = false");
@@ -304,6 +322,37 @@ function buildCoverSet(imageFiles){
   return { cover: driveImg(best.id), images: ordered.map(f => driveImg(f.id)) };
 }
 
+function parseVideoText(text){
+  const map = {};
+  const blocks = text.split(/\r?\n\s*\r?\n/);
+  blocks.forEach(block => {
+    const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return;
+    const header = lines[0].replace(/^\d+\.\s*/, '').toLowerCase();
+    const urls = lines.slice(1).filter(l => /^https?:\/\//i.test(l));
+    if (urls.length) map[header] = urls;
+  });
+  return map;
+}
+
+async function fetchVideoMap(folderContents){
+  const vidFile = folderContents.find(f => f.name && f.name.toLowerCase() === 'vid');
+  if (!vidFile) return {};
+  try {
+    const res = await fetch('https://www.googleapis.com/drive/v3/files/' + vidFile.id + '?alt=media&key=' + API_KEY);
+    if (!res.ok) return {};
+    const text = await res.text();
+    return parseVideoText(text);
+  } catch(e){
+    console.error('Failed to load VID file', e);
+    return {};
+  }
+}
+
+function attachVideos(tracks, videoMap){
+  return tracks.map(t => ({ ...t, videos: videoMap[t.title.toLowerCase()] || [] }));
+}
+
 async function buildAlbum(folder){
   const contents = await driveList(folder.id);
   const directTracks = contents.filter(isAudio).map(f => {
@@ -325,11 +374,11 @@ async function buildAlbum(folder){
       let discCover = null;
       let discImages = [];
       const subCoverFolder = subContents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
-      const subCoverFiles = subCoverFolder
-        ? (await driveList(subCoverFolder.id)).filter(isImage)
-        : subContents.filter(isImage);
+      const subCoverFolderContents = subCoverFolder ? await driveList(subCoverFolder.id) : subContents;
+      const subCoverFiles = subCoverFolderContents.filter(isImage);
       ({ cover: discCover, images: discImages } = buildCoverSet(subCoverFiles));
-      return { name: sub.name, cover: discCover, images: discImages, tracks };
+      const subVideoMap = await fetchVideoMap(subCoverFolderContents);
+      return { name: sub.name, cover: discCover, images: discImages, tracks: attachVideos(tracks, subVideoMap) };
     });
     const discs = discResults.filter(Boolean);
     return { title, date, multiDisc: true, discs, cover: discs[0]?.cover || null, tracks: [] };
@@ -338,11 +387,12 @@ async function buildAlbum(folder){
   let cover = null;
   let images = [];
   const coverFolder = contents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
-  const coverFiles = coverFolder
-    ? (await driveList(coverFolder.id)).filter(isImage)
-    : contents.filter(isImage);
+  const coverFolderContents = coverFolder ? await driveList(coverFolder.id) : contents;
+  const coverFiles = coverFolderContents.filter(isImage);
   ({ cover, images } = buildCoverSet(coverFiles));
-  return { title, date, cover, images, tracks: directTracks, multiDisc: false, discs: [{ name: title, cover, images, tracks: directTracks }] };
+  const videoMap = await fetchVideoMap(coverFolderContents);
+  const tracksWithVideo = attachVideos(directTracks, videoMap);
+  return { title, date, cover, images, tracks: tracksWithVideo, multiDisc: false, discs: [{ name: title, cover, images, tracks: tracksWithVideo }] };
 }
 
 async function buildCatalog(){
@@ -573,8 +623,13 @@ function renderAlbumView(album){
     const row = document.createElement('div');
     row.className = 'track';
     row.dataset.idx = i;
-    row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>';
+    const hasVideo = tr.videos && tr.videos.length > 0;
+    row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>' +
+      (hasVideo ? '<button class="video-btn" title="Watch video">▶</button>' : '');
     row.onclick = () => playDiscTrack(currentDisc.tracks, album.multiDisc ? (album.title + ' — ' + currentDisc.name) : album.title, i);
+    if (hasVideo){
+      row.querySelector('.video-btn').onclick = (e) => { e.stopPropagation(); openVideoLightbox(tr.videos, 0); };
+    }
     trackWrap.appendChild(row);
   });
   wrap.appendChild(trackWrap);
@@ -746,6 +801,48 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeLightbox();
   if (e.key === 'ArrowLeft') lightboxPrevImg();
   if (e.key === 'ArrowRight') lightboxNextImg();
+});
+
+/* Video lightbox */
+const videoLightbox = document.getElementById('videoLightbox');
+const videoLightboxFrame = document.getElementById('videoLightboxFrame');
+const videoLightboxNav = document.getElementById('videoLightboxNav');
+let lightboxVideos = [];
+let videoLightboxIndex = 0;
+
+function openVideoLightbox(videos, startIndex){
+  lightboxVideos = (videos && videos.length) ? videos : [];
+  videoLightboxIndex = startIndex >= 0 ? startIndex : 0;
+  updateVideoLightbox();
+  videoLightbox.classList.add('visible');
+}
+function updateVideoLightbox(){
+  if (!lightboxVideos.length) return;
+  const embed = youtubeEmbedUrl(lightboxVideos[videoLightboxIndex]);
+  videoLightboxFrame.src = embed || '';
+  videoLightboxNav.style.display = lightboxVideos.length > 1 ? 'flex' : 'none';
+}
+function videoLightboxPrevVid(){
+  videoLightboxIndex = (videoLightboxIndex - 1 + lightboxVideos.length) % lightboxVideos.length;
+  updateVideoLightbox();
+}
+function videoLightboxNextVid(){
+  videoLightboxIndex = (videoLightboxIndex + 1) % lightboxVideos.length;
+  updateVideoLightbox();
+}
+function closeVideoLightbox(){
+  videoLightbox.classList.remove('visible');
+  videoLightboxFrame.src = '';
+}
+document.getElementById('videoLightboxClose').onclick = closeVideoLightbox;
+document.getElementById('videoLightboxPrev').onclick = videoLightboxPrevVid;
+document.getElementById('videoLightboxNext').onclick = videoLightboxNextVid;
+videoLightbox.addEventListener('click', (e) => { if (e.target === videoLightbox) closeVideoLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if (!videoLightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape') closeVideoLightbox();
+  if (e.key === 'ArrowLeft') videoLightboxPrevVid();
+  if (e.key === 'ArrowRight') videoLightboxNextVid();
 });
 
 /* Reel — full chronological timeline across every project */
