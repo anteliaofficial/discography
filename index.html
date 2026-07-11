@@ -328,7 +328,7 @@ function parseVideoText(text){
   blocks.forEach(block => {
     const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (!lines.length) return;
-    const header = lines[0].replace(/^\d+\.\s*/, '').toLowerCase();
+    const header = lines[0].replace(/^\d+\.\s*/, '').replace(/\.mp3$/i, '').trim().toLowerCase();
     const urls = lines.slice(1).filter(l => /^https?:\/\//i.test(l));
     if (urls.length) map[header] = urls;
   });
