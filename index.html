@@ -732,6 +732,7 @@ function loadAndPlay(){
   player.classList.add('visible');
   updatePlayIcon(true);
   highlightPlayingRow(state.qIndex);
+  updateMediaSession(track);
 }
 function highlightPlayingRow(idx){
   document.querySelectorAll('.track').forEach(r => r.classList.remove('playing'));
@@ -745,14 +746,43 @@ playToggle.onclick = () => {
   if (!audio.src) return;
   if (audio.paused){ audio.play(); updatePlayIcon(true); } else { audio.pause(); updatePlayIcon(false); }
 };
-document.getElementById('prevBtn').onclick = () => {
+function goToPrevTrack(){
   if (state.qIndex > 0){ state.qIndex--; loadAndPlay(); }
   else if (state.chronoMode){ retreatChrono(); }
-};
-document.getElementById('nextBtn').onclick = () => {
+}
+function goToNextTrack(){
   if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); }
   else if (state.chronoMode){ advanceChrono(); }
-};
+}
+function updateMediaSession(track){
+  if (!('mediaSession' in navigator)) return;
+  let artwork = [];
+  const disc = state.album && state.album.discs ? state.album.discs[state.discIndex] : null;
+  if (disc && disc.cover){
+    artwork = [{ src: disc.cover, sizes: '512x512', type: 'image/png' }];
+  }
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.title,
+    artist: state.currentAlbumTitle || 'The Anti™ Radio',
+    album: 'The Anti™ Radio',
+    artwork: artwork
+  });
+}
+
+if ('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play', () => { audio.play(); });
+  navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); });
+  navigator.mediaSession.setActionHandler('previoustrack', goToPrevTrack);
+  navigator.mediaSession.setActionHandler('nexttrack', goToNextTrack);
+  navigator.mediaSession.setActionHandler('seekto', (details) => {
+    if (details.seekTime != null && audio.duration){ audio.currentTime = details.seekTime; }
+  });
+  audio.addEventListener('play', () => { navigator.mediaSession.playbackState = 'playing'; });
+  audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
+}
+
+document.getElementById('prevBtn').onclick = goToPrevTrack;
+document.getElementById('nextBtn').onclick = goToNextTrack;
 audio.addEventListener('ended', () => {
   if (state.qIndex < state.queue.length - 1){
     state.qIndex++;
