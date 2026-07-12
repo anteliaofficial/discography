@@ -545,7 +545,10 @@ function renderMain(){
   items.sort((a, b) => {
     if (!a.date) return 1;
     if (!b.date) return -1;
-    return state.sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
+    const dateCmp = state.sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
+    if (dateCmp !== 0) return dateCmp;
+    const titleCmp = a.title.localeCompare(b.title);
+    return state.sortDesc ? -titleCmp : titleCmp;
   });
   countLabel.textContent = items.length + (items.length === 1 ? ' release' : ' releases');
 
