@@ -166,6 +166,9 @@
   .video-frame-wrap iframe{ width:100%; height:100%; border:0; display:block; }
   .video-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); border-radius:50%; width:22px; height:22px; flex:0 0 auto; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .video-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+  .lyrics-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); border-radius:10px; height:22px; padding:0 8px; flex:0 0 auto; font-size:10px; letter-spacing:0.3px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; }
+  .lyrics-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+  .lyrics-content{ max-width:600px; max-height:80vh; overflow-y:auto; white-space:pre-wrap; text-align:center; font-size:15px; line-height:1.8; color:var(--ink); padding:20px; }
 </style>
 </head>
 <body>
@@ -239,6 +242,11 @@
     <button class="lightbox-arrow" id="videoLightboxPrev" aria-label="Previous">◀</button>
     <button class="lightbox-arrow" id="videoLightboxNext" aria-label="Next">▶</button>
   </div>
+</div>
+
+<div class="lightbox" id="lyricsLightbox">
+  <button class="lightbox-close" id="lyricsLightboxClose" aria-label="Close">&times;</button>
+  <div class="lyrics-content" id="lyricsContent"></div>
 </div>
 
 <script>
@@ -711,11 +719,16 @@ function renderAlbumView(album){
     row.className = 'track';
     row.dataset.idx = i;
     const hasVideo = tr.videos && tr.videos.length > 0;
+    const hasLyrics = !!tr.lyrics;
     row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>' +
-      (hasVideo ? '<button class="video-btn" title="Watch video">▶</button>' : '');
+      (hasVideo ? '<button class="video-btn" title="Watch video">▶</button>' : '') +
+      (hasLyrics ? '<button class="lyrics-btn" title="View lyrics">lyrics</button>' : '');
     row.onclick = () => playDiscTrack(currentDisc.tracks, album.multiDisc ? (album.title + ' — ' + currentDisc.name) : album.title, i);
     if (hasVideo){
       row.querySelector('.video-btn').onclick = (e) => { e.stopPropagation(); openVideoLightbox(tr.videos, 0); };
+    }
+    if (hasLyrics){
+      row.querySelector('.lyrics-btn').onclick = (e) => { e.stopPropagation(); openLyrics(tr.lyrics); };
     }
     trackWrap.appendChild(row);
   });
@@ -968,6 +981,24 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeVideoLightbox();
   if (e.key === 'ArrowLeft') videoLightboxPrevVid();
   if (e.key === 'ArrowRight') videoLightboxNextVid();
+});
+
+/* Lyrics lightbox */
+const lyricsLightbox = document.getElementById('lyricsLightbox');
+const lyricsContent = document.getElementById('lyricsContent');
+function openLyrics(text){
+  lyricsContent.textContent = text;
+  lyricsLightbox.classList.add('visible');
+}
+function closeLyrics(){
+  lyricsLightbox.classList.remove('visible');
+  lyricsContent.textContent = '';
+}
+document.getElementById('lyricsLightboxClose').onclick = closeLyrics;
+lyricsLightbox.addEventListener('click', (e) => { if (e.target === lyricsLightbox) closeLyrics(); });
+document.addEventListener('keydown', (e) => {
+  if (!lyricsLightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape') closeLyrics();
 });
 
 /* Reel — full chronological timeline across every project */
