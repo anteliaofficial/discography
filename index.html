@@ -55,6 +55,9 @@
   nav.categories{ gap:8px; padding-top:16px; }
   .project-info{ padding:14px 20px 0; font-size:12.5px; line-height:1.55; color:var(--ink-dim); max-width:560px; }
   .project-info .year{ font-family:'IBM Plex Mono', monospace; color:var(--cool); font-size:11px; margin-right:8px; }
+  .project-info-text{ display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+  .project-info-text.expanded{ -webkit-line-clamp:unset; overflow:visible; }
+  .project-info-toggle{ background:none; border:none; color:var(--accent); font-size:11px; letter-spacing:0.3px; padding:4px 0 0; cursor:pointer; font-family:'Sora', sans-serif; display:none; }
   nav.projects::-webkit-scrollbar, nav.categories::-webkit-scrollbar{ display:none; }
   .project-btn{
     flex:0 0 auto; background:transparent; border:1px solid var(--line); color:var(--ink-dim);
@@ -176,7 +179,10 @@
   </header>
 
   <nav class="projects" id="projectNav"></nav>
-  <div class="project-info" id="projectInfo"></div>
+  <div class="project-info" id="projectInfo">
+    <div class="project-info-text" id="projectInfoText"></div>
+    <button class="project-info-toggle" id="projectInfoToggle">Read more</button>
+  </div>
   <nav class="categories" id="categoryNav"></nav>
 
   <div class="toolbar">
@@ -467,19 +473,33 @@ function sortedCategoryKeys(project){
 }
 
 const PROJECT_INFO = {
-  'Antelia': { year: '2017', text: 'Proyecto solista que integra y proyecta la totalidad de su visión creativa. Reúne composición, exploración sonora, simbolismo, experiencia sensorial e investigación artística en una propuesta autoral que sintetiza más de una década de desarrollo musical.' },
-  'ARIA': { year: '2010', text: 'Proyecto grupal fundado por Mauro Fuentes. Como compositor principal desarrolló una intensa actividad creativa, discográfica y escénica que sentó las bases de su identidad como autor, intérprete y productor.' },
-  'Arken': { year: '2018', text: 'Proyecto grupal al que se incorpora como compositor, autor lírico, productor y vocalista. Esta experiencia proyectó parte importante de su repertorio autoral en un entorno colaborativo orientado al desarrollo profesional y la actividad escénica.' },
-  'Manto': { year: '2018', text: 'Proceso de exploración artística como espacio de investigación creativa y experimentación sonora. Durante este período se gestaron repertorios, metodologías y recursos expresivos que nutrieron distintos proyectos posteriores.' },
-  'Mauro Fuentes': { year: '—', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. (Pendiente: texto real por definir.)' }
+  'Antelia': { year: '2017', text: 'Brings every dimension of a single artistic journey together, where songwriting, performance, and production become one shared language.' },
+  'ARIA': { year: '2010', text: 'The origin of this creative universe. A band where identity, trust, and perseverance shaped a body of work that continues to write its story.' },
+  'Arken': { year: '2018', text: 'A meeting of different artistic paths that propelled this body of work toward new horizons through collaboration, reinterpretation, and a shared vision.' },
+  'Manto': { year: '2018', text: 'A laboratory where creative freedom replaced convention, allowing every idea to discover its own way of existing.' },
+  'Mauro Fuentes': { year: '—', text: 'The most intimate record of this journey. A place where early ideas, experiments, and the person behind every chapter remain.' }
 };
 
 function renderProjectInfo(){
   const label = CATALOG[state.project] ? CATALOG[state.project].label : '';
   const info = PROJECT_INFO[label];
-  projectInfo.innerHTML = info
-    ? '<span class="year">' + info.year + '</span>' + info.text
-    : '';
+  const textEl = document.getElementById('projectInfoText');
+  const toggleBtn = document.getElementById('projectInfoToggle');
+  textEl.classList.remove('expanded');
+  toggleBtn.textContent = 'Read more';
+  toggleBtn.style.display = 'none';
+  toggleBtn.onclick = null;
+  if (!info){ textEl.innerHTML = ''; return; }
+  textEl.innerHTML = '<span class="year">' + info.year + '</span>' + info.text;
+  requestAnimationFrame(() => {
+    if (textEl.scrollHeight > textEl.clientHeight + 1){
+      toggleBtn.style.display = 'block';
+      toggleBtn.onclick = () => {
+        const expanded = textEl.classList.toggle('expanded');
+        toggleBtn.textContent = expanded ? 'Read less' : 'Read more';
+      };
+    }
+  });
 }
 
 function renderProjects(){
