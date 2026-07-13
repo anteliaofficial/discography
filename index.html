@@ -168,7 +168,10 @@
   .video-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
   .lyrics-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); border-radius:10px; height:22px; padding:0 8px; flex:0 0 auto; font-size:10px; letter-spacing:0.3px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; }
   .lyrics-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
-  .lyrics-content{ max-width:600px; max-height:80vh; overflow-y:auto; white-space:pre-wrap; text-align:center; font-size:15px; line-height:1.8; color:var(--ink); padding:20px; }
+  .lyrics-viewport{ max-width:600px; max-height:70vh; overflow:hidden; position:relative; touch-action:none; margin:0 auto; cursor:default; }
+  .lyrics-content{ text-align:center; font-size:15px; line-height:1.8; color:var(--ink); white-space:pre-wrap; padding:20px; }
+  .lyrics-content strong{ font-weight:700; color:var(--ink); }
+  .lyrics-content em{ font-style:italic; color:var(--ink-dim); }
 </style>
 </head>
 <body>
@@ -246,7 +249,9 @@
 
 <div class="lightbox" id="lyricsLightbox">
   <button class="lightbox-close" id="lyricsLightboxClose" aria-label="Close">&times;</button>
-  <div class="lyrics-content" id="lyricsContent"></div>
+  <div class="lyrics-viewport" id="lyricsViewport">
+    <div class="lyrics-content" id="lyricsContent"></div>
+  </div>
 </div>
 
 <script>
@@ -985,17 +990,87 @@ document.addEventListener('keydown', (e) => {
 
 /* Lyrics lightbox */
 const lyricsLightbox = document.getElementById('lyricsLightbox');
+const lyricsViewport = document.getElementById('lyricsViewport');
 const lyricsContent = document.getElementById('lyricsContent');
+let lyricsOffset = 0;
+let lyricsMaxOffset = 0;
+let lyricsSpeed = 0;
+let lyricsDragging = false;
+let lyricsDragStartY = 0;
+let lyricsDragStartOffset = 0;
+
+function escapeHtml(str){
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function formatLyricsText(text){
+  let safe = escapeHtml(text);
+  safe = safe.replace(/\*([^\n*]+)\*/g, '<strong>$1</strong>');
+  safe = safe.replace(/_([^\n_]+)_/g, '<em>$1</em>');
+  return safe;
+}
+
+function applyLyricsOffset(){
+  lyricsContent.style.transform = 'translateY(' + (-lyricsOffset) + 'px)';
+}
+
 function openLyrics(text){
-  lyricsContent.textContent = text;
+  lyricsContent.innerHTML = formatLyricsText(text);
+  lyricsOffset = 0;
+  applyLyricsOffset();
   lyricsLightbox.classList.add('visible');
+  requestAnimationFrame(() => {
+    lyricsMaxOffset = Math.max(0, lyricsContent.scrollHeight - lyricsViewport.clientHeight);
+  });
 }
 function closeLyrics(){
   lyricsLightbox.classList.remove('visible');
-  lyricsContent.textContent = '';
+  lyricsContent.innerHTML = '';
 }
 document.getElementById('lyricsLightboxClose').onclick = closeLyrics;
 lyricsLightbox.addEventListener('click', (e) => { if (e.target === lyricsLightbox) closeLyrics(); });
+
+lyricsViewport.addEventListener('pointermove', (e) => {
+  if (e.pointerType === 'touch' || lyricsDragging) return;
+  const rect = lyricsViewport.getBoundingClientRect();
+  const rel = (e.clientY - rect.top) / rect.height;
+  if (rel < 0.15) lyricsSpeed = -380;
+  else if (rel < 0.35) lyricsSpeed = -130;
+  else if (rel > 0.85) lyricsSpeed = 380;
+  else if (rel > 0.65) lyricsSpeed = 130;
+  else lyricsSpeed = 0;
+});
+lyricsViewport.addEventListener('pointerleave', () => { lyricsSpeed = 0; });
+lyricsViewport.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch') return;
+  lyricsDragging = true;
+  lyricsDragStartY = e.clientY;
+  lyricsDragStartOffset = lyricsOffset;
+  lyricsViewport.setPointerCapture(e.pointerId);
+});
+lyricsViewport.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch' || !lyricsDragging) return;
+  const delta = e.clientY - lyricsDragStartY;
+  lyricsOffset = Math.min(lyricsMaxOffset, Math.max(0, lyricsDragStartOffset - delta));
+  applyLyricsOffset();
+});
+function endLyricsDrag(){ lyricsDragging = false; }
+lyricsViewport.addEventListener('pointerup', endLyricsDrag);
+lyricsViewport.addEventListener('pointercancel', endLyricsDrag);
+
+let lyricsLastTime = null;
+function lyricsTick(timestamp){
+  if (lyricsLastTime === null) lyricsLastTime = timestamp;
+  const dt = (timestamp - lyricsLastTime) / 1000;
+  lyricsLastTime = timestamp;
+  if (lyricsLightbox.classList.contains('visible') && !lyricsDragging && lyricsSpeed !== 0){
+    lyricsOffset = Math.min(lyricsMaxOffset, Math.max(0, lyricsOffset + lyricsSpeed * dt));
+    applyLyricsOffset();
+  }
+  requestAnimationFrame(lyricsTick);
+}
+requestAnimationFrame(lyricsTick);
+
 document.addEventListener('keydown', (e) => {
   if (!lyricsLightbox.classList.contains('visible')) return;
   if (e.key === 'Escape') closeLyrics();
