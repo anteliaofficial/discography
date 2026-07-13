@@ -256,12 +256,12 @@
 
 <script>
 /* ======================================================
-   CONFIGURACIÓN — reemplaza esto con tu propia clave
+   CONFIG — replace this with your own key
    ====================================================== */
 const API_KEY = 'AIzaSyC_WhqaOc4ewDFlwdAf1nc2zVWzfLRLrJk';
 const ROOT_FOLDER_ID = '1h5MrREPfZxbtxag4FXFIACUmMxqz1lV0';
 const CACHE_KEY = 'antelia-catalog-cache-v2';
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 function driveImg(id){ return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w600'; }
 function driveAudio(id){ return 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media&key=' + API_KEY; }
@@ -510,7 +510,7 @@ async function getCatalog(forceRefresh){
 }
 
 /* ======================================================
-   UI / estado
+   UI / state
    ====================================================== */
 let CATALOG = null;
 let state = { project: null, category: null, album: null, sortDesc: true, queue: [], qIndex: -1, currentAlbumTitle: '', chronoMode: false, chronoIndex: -1, chronoStep: 1 };
@@ -778,7 +778,7 @@ refreshBtn.onclick = async () => {
   refreshBtn.disabled = false;
 };
 
-/* Player (igual que antes) */
+/* Player */
 const audio = document.getElementById('audio');
 const player = document.getElementById('player');
 const playToggle = document.getElementById('playToggle');
@@ -791,10 +791,31 @@ const progressBar = document.getElementById('progressBar');
 const seekRemaining = document.getElementById('seekRemaining');
 const haloRing = document.querySelector('.halo-ring');
 
+let prefetchedTrack = { id: null, blobUrl: null };
+
+function prefetchNextTrack(){
+  const nextIdx = state.qIndex + 1;
+  if (nextIdx >= state.queue.length) return;
+  const nextTrack = state.queue[nextIdx];
+  if (!nextTrack || prefetchedTrack.id === nextTrack.id) return;
+  fetch(driveAudio(nextTrack.id))
+    .then(r => (r.ok ? r.blob() : null))
+    .then(blob => {
+      if (!blob) return;
+      if (prefetchedTrack.blobUrl) URL.revokeObjectURL(prefetchedTrack.blobUrl);
+      prefetchedTrack = { id: nextTrack.id, blobUrl: URL.createObjectURL(blob) };
+    })
+    .catch(() => {});
+}
+
 function loadAndPlay(){
   const track = state.queue[state.qIndex];
   if (!track) return;
-  audio.src = driveAudio(track.id);
+  if (prefetchedTrack.id === track.id && prefetchedTrack.blobUrl){
+    audio.src = prefetchedTrack.blobUrl;
+  } else {
+    audio.src = driveAudio(track.id);
+  }
   audio.play().catch(()=>{});
   nowTitle.textContent = track.title;
   nowAlbum.textContent = state.currentAlbumTitle;
@@ -806,6 +827,7 @@ function loadAndPlay(){
   updatePlayIcon(true);
   highlightPlayingRow(state.qIndex);
   updateMediaSession(track);
+  prefetchNextTrack();
 }
 function highlightPlayingRow(idx){
   document.querySelectorAll('.track').forEach(r => r.classList.remove('playing'));
@@ -1252,7 +1274,7 @@ requestAnimationFrame(reelTick);
 
 /* Arranque */
 (async () => {
-  if (API_KEY === 'PEGA_AQUI_TU_API_KEY'){
+  if (API_KEY === 'YOUR_KEY_HERE'){
     main.innerHTML = '<div class="state-msg">API Key not configured yet.<br>Open the code (look for API_KEY) and paste yours in.</div>';
     return;
   }
