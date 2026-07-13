@@ -1005,8 +1005,8 @@ function escapeHtml(str){
 
 function formatLyricsText(text){
   let safe = escapeHtml(text);
-  safe = safe.replace(/\*([^\n*]+)\*/g, '<strong>$1</strong>');
-  safe = safe.replace(/_([^\n_]+)_/g, '<em>$1</em>');
+  safe = safe.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+  safe = safe.replace(/_([^_]+)_/g, '<em>$1</em>');
   return safe;
 }
 
