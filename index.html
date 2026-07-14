@@ -114,6 +114,8 @@
   .album-title-multi{ font-family:'Sora', sans-serif; font-weight:500; font-size:22px; margin:0 0 2px; }
   .disc-name-active{ font-size:13px; color:var(--ink-dim); margin:0 0 16px; }
   .subtitle-row{ display:flex; align-items:center; gap:8px; }
+  .share-btn{ margin-left:auto; background:none; border:none; color:var(--ink-dim); font-size:11px; letter-spacing:0.5px; cursor:pointer; font-family:'Sora', sans-serif; padding:0; }
+  .share-btn:hover{ color:var(--accent); }
   .solo-cover{ width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:8px; }
 
   .player{
@@ -688,6 +690,11 @@ function renderAlbumView(album){
     vidBtn.onclick = () => openVideoLightbox(currentDisc.releaseVideos, 0);
     subtitleText.appendChild(vidBtn);
   }
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'share-btn';
+  shareBtn.textContent = 'Share';
+  shareBtn.onclick = (e) => { e.stopPropagation(); shareRelease(album, shareBtn); };
+  subtitleText.appendChild(shareBtn);
   wrap.appendChild(subtitleText);
 
   if (album.multiDisc){
@@ -1273,6 +1280,45 @@ function reelTick(timestamp){
 requestAnimationFrame(reelTick);
 
 /* Arranque */
+function buildShareUrl(album){
+  const projLabel = CATALOG[state.project].label;
+  const catLabel = CATALOG[state.project].categories[state.category].label;
+  const url = new URL(location.href);
+  url.search = '';
+  url.searchParams.set('project', projLabel);
+  url.searchParams.set('category', catLabel);
+  url.searchParams.set('date', album.date);
+  return url.toString();
+}
+
+async function shareRelease(album, btnEl){
+  const url = buildShareUrl(album);
+  const shareTitle = (album.multiDisc ? album.discs[state.discIndex].name : album.title) + ' — The Anti™ Radio';
+  if (navigator.share){
+    try { await navigator.share({ title: shareTitle, url }); } catch(e){}
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    const original = btnEl.textContent;
+    btnEl.textContent = 'Copied!';
+    setTimeout(() => { btnEl.textContent = original; }, 1500);
+  } catch(e){}
+}
+
+function findReleaseFromParams(projectLabel, categoryLabel, date){
+  for (const projKey of Object.keys(CATALOG)){
+    if (CATALOG[projKey].label !== projectLabel) continue;
+    const categories = CATALOG[projKey].categories;
+    for (const catKey of Object.keys(categories)){
+      if (categories[catKey].label !== categoryLabel) continue;
+      const item = categories[catKey].items.find(i => i.date === date);
+      if (item) return { projKey, catKey, item };
+    }
+  }
+  return null;
+}
+
 (async () => {
   if (API_KEY === 'YOUR_KEY_HERE'){
     main.innerHTML = '<div class="state-msg">API Key not configured yet.<br>Open the code (look for API_KEY) and paste yours in.</div>';
@@ -1280,8 +1326,20 @@ requestAnimationFrame(reelTick);
   }
   try {
     CATALOG = await getCatalog(false);
-    state.project = Object.keys(CATALOG)[0];
-    state.category = sortedCategoryKeys(state.project)[0];
+    const params = new URLSearchParams(location.search);
+    const sp = params.get('project');
+    const sc = params.get('category');
+    const sd = params.get('date');
+    const shared = (sp && sc && sd) ? findReleaseFromParams(sp, sc, sd) : null;
+    if (shared){
+      state.project = shared.projKey;
+      state.category = shared.catKey;
+      state.album = shared.item;
+      state.discIndex = 0;
+    } else {
+      state.project = Object.keys(CATALOG)[0];
+      state.category = sortedCategoryKeys(state.project)[0];
+    }
     renderAll();
     renderReel();
   } catch(e){
