@@ -66,6 +66,7 @@ Read top to bottom, this is roughly the order things appear in `index.html`:
 | Player core | `loadAndPlay()`, `goToPrevTrack()`, `goToNextTrack()`, seek bar pointer handlers |
 | Next-track prefetch | `prefetchNextTrack()`, `prefetchedTrack` |
 | Media Session (lock screen) | `updateMediaSession()`, the `if ('mediaSession' in navigator)` block |
+| Shareable release links | `buildShareUrl()`, `shareRelease()`, `findReleaseFromParams()` |
 | Full timeline reel | `buildReelEntries()`, `renderReel()`, hover/drag physics, `playChronoFromReel()`, `advanceChrono()`, `retreatChrono()` |
 
 ---
