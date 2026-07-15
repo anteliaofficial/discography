@@ -64,6 +64,7 @@ Read top to bottom, this is roughly the order things appear in `index.html`:
 | Video lightbox | `openVideoLightbox()` / `videoLightboxPrevVid()` / `videoLightboxNextVid()` |
 | Lyrics viewer | `openLyrics()`, cylinder-style scroll (`lyricsTick()`, pointer handlers) |
 | Player core | `loadAndPlay()`, `goToPrevTrack()`, `goToNextTrack()`, seek bar pointer handlers |
+| Playback resilience | `audio.addEventListener('error', ...)` — surfaces a message and auto-advances instead of failing silently |
 | Next-track prefetch | `prefetchNextTrack()`, `prefetchedTrack` |
 | Media Session (lock screen) | `updateMediaSession()`, the `if ('mediaSession' in navigator)` block |
 | Shareable release links | `buildShareUrl()`, `shareRelease()`, `findReleaseFromParams()` |
@@ -279,3 +280,8 @@ before troubleshooting anything further.
   if this ever grows into the hundreds of releases, a periodically
   pre-generated catalog JSON (built by a script, not walked live per visitor)
   would load faster than live-walking Drive.
+- **A track failing to load** (Drive throttling, a revoked/misconfigured key,
+  a genuinely broken file) used to just go silent with no explanation. Fixed:
+  the `audio` element's `error` event now shows a brief inline message and
+  auto-advances to the next track (or the next release, if in chrono mode)
+  after ~1.2s, instead of stalling playback with no feedback.
