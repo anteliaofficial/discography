@@ -19,7 +19,13 @@
     --accent: #c81e6b;
     --accent-dim: #6e2a48;
     --cool: #2fd0c0;
+    --atmo-1: #123a44;
+    --atmo-2: #3a5a63;
   }
+  .proj-aria{ --atmo-1:#bfe3f7; --atmo-2:#e8f4fb; }
+  .proj-arken{ --atmo-1:#0a3f52; --atmo-2:#125a6b; }
+  .proj-manto{ --atmo-1:#2c2620; --atmo-2:#3a3226; }
+  .proj-mauro{ --atmo-1:#1e1e1e; --atmo-2:#242424; }
   *{ box-sizing:border-box; }
   html,body{ margin:0; padding:0; height:100%; }
   body{
@@ -30,7 +36,73 @@
   }
   ::selection{ background:var(--accent); color:#fff; }
 
-  .app{ display:flex; flex-direction:column; min-height:100vh; padding-bottom:96px; }
+  .app{ display:flex; flex-direction:column; min-height:100vh; padding-bottom:96px; position:relative; z-index:2; }
+
+  /* Atmosphere — ambient per-project background system */
+  .atmosphere{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .atmosphere::before, .atmosphere::after{
+    content:''; position:absolute; border-radius:50%; filter:blur(60px); will-change:transform;
+  }
+  .atmosphere::before{
+    width:46vw; height:46vw; max-width:520px; max-height:520px; min-width:260px; min-height:260px;
+    top:-10%; left:-10%; background:var(--atmo-1); opacity:.35;
+    transform:translateY(var(--sy, 0px));
+    animation:atmoDriftA 70s ease-in-out infinite;
+  }
+  .atmosphere::after{
+    width:38vw; height:38vw; max-width:440px; max-height:440px; min-width:220px; min-height:220px;
+    bottom:-12%; right:-8%; background:var(--atmo-2); opacity:.28;
+    transform:translateY(var(--sy, 0px));
+    animation:atmoDriftB 90s ease-in-out infinite;
+  }
+  @keyframes atmoDriftA{ 0%,100%{ transform:translate(0, var(--sy,0px)) scale(1); } 50%{ transform:translate(2.5%, calc(var(--sy,0px) - 1.5%)) scale(1.05); } }
+  @keyframes atmoDriftB{ 0%,100%{ transform:translate(0, var(--sy,0px)) scale(1); } 50%{ transform:translate(-2%, calc(var(--sy,0px) + 2%)) scale(0.96); } }
+
+  .atmo-halo-antelia{
+    position:absolute; top:12%; left:52%; width:38vw; height:38vw; max-width:420px; max-height:420px; min-width:200px; min-height:200px;
+    border-radius:50%; filter:blur(6px); opacity:0; transition:opacity 1.4s ease; will-change:transform;
+    background:conic-gradient(from 0deg, #ff3b6b, #ffcf3b, #3bff8f, #3bd4ff, #a13bff, #ff3b6b);
+    mask:radial-gradient(circle, transparent 55%, black 58%, black 70%, transparent 73%);
+    -webkit-mask:radial-gradient(circle, transparent 55%, black 58%, black 70%, transparent 73%);
+    animation:atmoSpin 110s linear infinite;
+  }
+  .atmosphere.proj-antelia .atmo-halo-antelia{ opacity:.28; }
+  @keyframes atmoSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+
+  .atmo-accent{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity 1.4s ease; }
+  .atmosphere.proj-aria .atmo-accent-aria{ opacity:.5; }
+  .atmosphere.proj-arken .atmo-accent-arken{ opacity:.4; }
+  .atmosphere.proj-manto .atmo-accent-manto{ opacity:.4; }
+  .atmosphere.proj-mauro .atmo-accent-mauro{ opacity:.35; }
+
+  .atmo-dot{ animation:atmoTwinkle 14s ease-in-out infinite; transform-origin:center; }
+  @keyframes atmoTwinkle{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
+
+  .atmo-wave{ animation:atmoWave 40s ease-in-out infinite; }
+  @keyframes atmoWave{ 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(-2%); } }
+
+  .atmo-veil{ animation:atmoBreathe 50s ease-in-out infinite; transform-origin:center; }
+  @keyframes atmoBreathe{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.03); opacity:.85; } }
+
+  .atmo-ray{ animation:atmoFade 60s ease-in-out infinite; }
+  @keyframes atmoFade{ 0%,100%{ opacity:.6; } 50%{ opacity:.3; } }
+
+  .atmo-noise{
+    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.025; mix-blend-mode:overlay;
+    background-size:180px 180px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (max-width:600px){
+    .atmosphere::before{ filter:blur(40px); }
+    .atmosphere::after{ filter:blur(40px); }
+    .atmo-halo-antelia{ filter:blur(4px); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .atmosphere::before, .atmosphere::after, .atmo-halo-antelia,
+    .atmo-dot, .atmo-wave, .atmo-veil, .atmo-ray{ animation:none !important; }
+  }
 
   header.top{
     padding:28px 20px 14px; border-bottom:1px solid var(--line);
@@ -179,6 +251,37 @@
 </style>
 </head>
 <body>
+<div class="atmosphere" id="atmosphere">
+  <div class="atmo-halo-antelia"></div>
+
+  <svg class="atmo-accent atmo-accent-aria" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+    <circle class="atmo-dot" cx="90" cy="110" r="2.2" fill="#eaf6ff" style="animation-delay:0s"/>
+    <circle class="atmo-dot" cx="220" cy="60" r="1.8" fill="#cfeaff" style="animation-delay:2s"/>
+    <circle class="atmo-dot" cx="300" cy="150" r="2.2" fill="#eaf6ff" style="animation-delay:4s"/>
+    <circle class="atmo-dot" cx="160" cy="230" r="1.8" fill="#eaf6ff" style="animation-delay:6s"/>
+    <circle class="atmo-dot" cx="270" cy="280" r="2.2" fill="#cfeaff" style="animation-delay:8s"/>
+    <path d="M90,110 Q160,150 220,60 M220,60 Q270,110 300,150 M160,230 Q220,260 270,280" fill="none" stroke="#bfe3f7" stroke-width="0.5"/>
+  </svg>
+
+  <svg class="atmo-accent atmo-accent-arken" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+    <path class="atmo-wave" d="M0,160 Q100,130 200,170 T400,150" fill="none" stroke="#4fb8cf" stroke-width="0.8"/>
+    <path class="atmo-wave" d="M0,240 Q100,210 200,250 T400,225" fill="none" stroke="#2e7f96" stroke-width="0.6" style="animation-delay:-6s"/>
+  </svg>
+
+  <svg class="atmo-accent atmo-accent-manto" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+    <path class="atmo-veil" d="M30,150 Q110,80 200,110 Q310,150 370,110 Q360,190 320,240 Q240,310 150,280 Q55,255 30,150 Z" fill="#c9a98c" opacity="0.35" style="filter:blur(6px)"/>
+    <path class="atmo-veil" d="M110,140 Q135,100 170,125 Q195,150 170,175 Q140,195 115,170 Q95,150 110,140 Z" fill="#8a95a0" opacity="0.4" style="filter:blur(3px); animation-delay:-12s"/>
+  </svg>
+
+  <svg class="atmo-accent atmo-accent-mauro" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+    <circle cx="200" cy="200" r="14" fill="none" stroke="#a0a0a0" stroke-width="0.6"/>
+    <line class="atmo-ray" x1="200" y1="200" x2="200" y2="60" stroke="#8a8a8a" stroke-width="0.4"/>
+    <line class="atmo-ray" x1="200" y1="200" x2="330" y2="270" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-15s"/>
+    <line class="atmo-ray" x1="200" y1="200" x2="70" y2="270" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-30s"/>
+  </svg>
+</div>
+<div class="atmo-noise"></div>
+
 <div class="app">
   <header class="top">
     <div>
@@ -570,6 +673,17 @@ function renderProjectInfo(){
   });
 }
 
+const PROJECT_BG_CLASS = { 'Antelia': 'proj-antelia', 'ARIA': 'proj-aria', 'Arken': 'proj-arken', 'Manto': 'proj-manto', 'Mauro Fuentes': 'proj-mauro' };
+
+function applyProjectAtmosphere(){
+  const atmosphere = document.getElementById('atmosphere');
+  if (!atmosphere) return;
+  const label = CATALOG[state.project] ? CATALOG[state.project].label : null;
+  const cls = PROJECT_BG_CLASS[label] || 'proj-antelia';
+  Object.values(PROJECT_BG_CLASS).forEach(c => atmosphere.classList.remove(c));
+  atmosphere.classList.add(cls);
+}
+
 function renderProjects(){
   projectNav.innerHTML = '';
   Object.keys(CATALOG).forEach(key => {
@@ -585,6 +699,7 @@ function renderProjects(){
     projectNav.appendChild(btn);
   });
   renderProjectInfo();
+  applyProjectAtmosphere();
 }
 
 function renderCategories(){
@@ -1125,6 +1240,18 @@ document.addEventListener('keydown', (e) => {
   if (!lyricsLightbox.classList.contains('visible')) return;
   if (e.key === 'Escape') closeLyrics();
 });
+
+/* Subtle scroll parallax for the atmosphere layers (the one deliberate JS exception) */
+let atmoTicking = false;
+function updateAtmoParallax(){
+  const sy = Math.min(60, window.scrollY * 0.04);
+  const atmosphere = document.getElementById('atmosphere');
+  if (atmosphere) atmosphere.style.setProperty('--sy', sy + 'px');
+  atmoTicking = false;
+}
+window.addEventListener('scroll', () => {
+  if (!atmoTicking){ requestAnimationFrame(updateAtmoParallax); atmoTicking = true; }
+}, { passive: true });
 
 /* Reel — full chronological timeline across every project */
 const reelSection = document.getElementById('reelSection');
