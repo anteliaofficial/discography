@@ -63,15 +63,15 @@
     opacity:0; transition:opacity 1.4s ease;
   }
   .atmosphere.proj-antelia .atmo-crystal{ opacity:.42; }
-  .atmo-crystal-spin{ animation:atmoCrystalRotate 100s linear infinite; transform-origin:200px 200px; will-change:transform; }
-  @keyframes atmoCrystalRotate{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
-  .atmo-shine{
-    position:absolute; inset:0; mix-blend-mode:screen; pointer-events:none;
-    background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.32) 48%, rgba(255,255,255,.42) 50%, rgba(255,255,255,.32) 52%, transparent 65%);
-    background-size:260% 260%;
-    animation:atmoShine 26s ease-in-out infinite;
+  .atmo-glow{
+    position:absolute; inset:0; border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,214,120,.22) 20%, transparent 46%);
+    filter:blur(18px);
+    animation:atmoGlowPulse 34s ease-in-out infinite;
   }
-  @keyframes atmoShine{ 0%{ background-position:-80% -80%; } 50%{ background-position:180% 180%; } 100%{ background-position:-80% -80%; } }
+  @keyframes atmoGlowPulse{ 0%,100%{ opacity:.6; transform:scale(1); } 50%{ opacity:.9; transform:scale(1.05); } }
+  .atmo-rings-breathe{ animation:atmoRingsBreathe 46s ease-in-out infinite; transform-origin:200px 200px; will-change:transform; }
+  @keyframes atmoRingsBreathe{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.03); } }
 
   .atmo-accent{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity 1.4s ease; }
   .atmosphere.proj-aria .atmo-accent-aria{ opacity:.5; }
@@ -103,7 +103,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .atmosphere::before, .atmosphere::after, .atmo-crystal-spin, .atmo-shine,
+    .atmosphere::before, .atmosphere::after, .atmo-rings-breathe, .atmo-glow,
     .atmo-dot, .atmo-line-draw, .atmo-wave, .atmo-ray{ animation:none !important; }
   }
 
