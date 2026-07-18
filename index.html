@@ -1,1 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Anti™ Radio ● On Air</title>
+<meta name="theme-color" content="#0a0a0d">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Sora:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a0d;
+    --bg-raised: #131317;
+    --line: #24242a;
+    --ink: #f2ede7;
+    --ink-dim: #9a9aa2;
+    --accent: #c81e6b;
+    --accent-dim: #6e2a48;
+    --cool: #2fd0c0;
+    --atmo-1: #1f1024;
+    --atmo-2: #101f28;
+  }
+  /* Ambient glow beneath each project's line-art layer — deliberately near-monochrome.
+     Antelia is the only project allowed a multicolor identity (carried by its rings, not this glow). */
+  .proj-antelia{ --atmo-1:#22102a; --atmo-2:#0e1a24; }
+  .proj-aria{ --atmo-1:#081824; --atmo-2:#0b2230; }
+  .proj-arken{ --atmo-1:#03121a; --atmo-2:#07202c; }
+  .proj-manto{ --atmo-1:#1a140f; --atmo-2:#221b13; }
+  .proj-mauro{ --atmo-1:#131313; --atmo-2:#191919; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; }
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Sora', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--accent); color:#fff; }
 
+  .app{ display:flex; flex-direction:column; min-height:100vh; padding-bottom:96px; position:relative; z-index:2; }
+
+  /* ============================================================
+     Atmosphere — ambient per-project identity system.
+     One shared grammar (line weight, opacity, element count, speed);
+     only geometry, color and symbolism change per project.
+     Design note for future maintainers: this whole block + the
+     #atmosphere markup below is the *entire* Atmosphere system.
+     applyProjectAtmosphere() only ever toggles the .proj-* class on
+     #atmosphere — nothing here should require touching that function.
+     ============================================================ */
+  .atmosphere{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; background:var(--bg); }
+
+  /* Ambient glow — a soft, near-monochrome wash under the line art. Deliberately
+     subtle: it should read as depth, never as a competing shape against a cover. */
+  .atmosphere::before, .atmosphere::after{
+    content:''; position:absolute; border-radius:50%; filter:blur(70px); will-change:transform;
+  }
+  .atmosphere::before{
+    width:52vw; height:52vw; max-width:600px; max-height:600px; min-width:280px; min-height:280px;
+    top:-14%; left:-12%; background:var(--atmo-1); opacity:.5;
+    transform:translateY(var(--sy, 0px));
+    animation:atmoDriftA 80s ease-in-out infinite;
+  }
+  .atmosphere::after{
+    width:44vw; height:44vw; max-width:520px; max-height:520px; min-width:240px; min-height:240px;
+    bottom:-14%; right:-10%; background:var(--atmo-2); opacity:.4;
+    transform:translateY(var(--sy, 0px));
+    animation:atmoDriftB 95s ease-in-out infinite;
+  }
+  @keyframes atmoDriftA{ 0%,100%{ transform:translate(0, var(--sy,0px)) scale(1); } 50%{ transform:translate(2%, calc(var(--sy,0px) - 1.2%)) scale(1.04); } }
+  @keyframes atmoDriftB{ 0%,100%{ transform:translate(0, var(--sy,0px)) scale(1); } 50%{ transform:translate(-1.6%, calc(var(--sy,0px) + 1.6%)) scale(0.97); } }
+
+  /* Shared line-art layer. Screen blend lets thin strokes glow faintly against
+     the near-black background instead of sitting flat on top of it. */
+  .atmo-layer{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; transition:opacity 1.6s ease;
+    mix-blend-mode:screen;
+  }
+  .atmo-layer svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .atmo-layer path, .atmo-layer circle, .atmo-layer line, .atmo-layer polygon{ vector-effect:non-scaling-stroke; }
+
+  .atmosphere.proj-antelia .atmo-layer-antelia{ opacity:.62; }
+  .atmosphere.proj-aria    .atmo-layer-aria{ opacity:.58; }
+  .atmosphere.proj-arken   .atmo-layer-arken{ opacity:.5; }
+  .atmosphere.proj-manto   .atmo-layer-manto{ opacity:.42; }
+  .atmosphere.proj-mauro   .atmo-layer-mauro{ opacity:.36; }
+
+  /* Breathing — the one motion every layer shares: near-imperceptible scale,
+     transform-origin at center, long duration. Cycle length is the one
+     deliberate per-project variation (each project's symbolic number loosely
+     informs its pace: Antelia 21s, Aria 24s, Arken 25s, Manto 28s, Mauro 30s). */
+  .atmo-breathe{ transform-origin:500px 500px; will-change:transform; }
+  .atmo-antelia-breathe{ animation:atmoBreathe21 21s ease-in-out infinite; }
+  .atmo-aria-breathe{ animation:atmoBreathe24 24s ease-in-out infinite; }
+  .atmo-arken-breathe{ animation:atmoBreathe25 25s ease-in-out infinite; }
+  .atmo-manto-breathe{ animation:atmoBreathe28 28s ease-in-out infinite; }
+  .atmo-mauro-breathe{ animation:atmoBreathe30 30s ease-in-out infinite; }
+  @keyframes atmoBreathe21{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.018); } }
+  @keyframes atmoBreathe24{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.015); } }
+  @keyframes atmoBreathe25{ 0%,100%{ transform:scale(1) translate(0,0); } 50%{ transform:scale(1.012) translate(3px,-2px); } }
+  @keyframes atmoBreathe28{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.014); } }
+  @keyframes atmoBreathe30{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.01); } }
+
+  /* Constellation stars (Aria) — small, discrete twinkle; lines stay the protagonist. */
+  .atmo-dot{ animation:atmoTwinkle 14s ease-in-out infinite; transform-origin:center; }
+  @keyframes atmoTwinkle{ 0%,100%{ opacity:.35; } 50%{ opacity:1; } }
+  .atmo-dot-faint{ animation:atmoTwinkleFaint 18s ease-in-out infinite; transform-origin:center; }
+  @keyframes atmoTwinkleFaint{ 0%,100%{ opacity:.12; } 50%{ opacity:.4; } }
+
+  /* Line-draw — used for Aria's constellation edges and Manto's diagram connectors. */
+  .atmo-line-draw{ stroke-dasharray:340; stroke-dashoffset:340; animation:atmoDraw 32s ease-in-out infinite; }
+  @keyframes atmoDraw{ 0%{ stroke-dashoffset:340; opacity:0; } 12%{ opacity:.65; } 45%{ stroke-dashoffset:0; opacity:.65; } 70%{ stroke-dashoffset:0; opacity:.65; } 92%{ opacity:0; } 100%{ stroke-dashoffset:340; opacity:0; } }
+
+  /* Currents (Arken) — slow horizontal drift, bathymetric-line feel. */
+  .atmo-current{ animation:atmoCurrent 38s ease-in-out infinite; }
+  @keyframes atmoCurrent{ 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(-1.4%); } }
+
+  /* Technical marks (Manto, Mauro) — a slow opacity breath, nothing sharper. */
+  .atmo-mark{ animation:atmoMarkFade 26s ease-in-out infinite; }
+  @keyframes atmoMarkFade{ 0%,100%{ opacity:.55; } 50%{ opacity:.3; } }
+
+  .atmo-noise{
+    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.025; mix-blend-mode:overlay;
+    background-size:180px 180px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (max-width:600px){
+    .atmosphere::before{ filter:blur(46px); }
+    .atmosphere::after{ filter:blur(46px); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .atmosphere::before, .atmosphere::after,
+    .atmo-antelia-breathe, .atmo-aria-breathe, .atmo-arken-breathe, .atmo-manto-breathe, .atmo-mauro-breathe,
+    .atmo-dot, .atmo-dot-faint, .atmo-line-draw, .atmo-current, .atmo-mark{ animation:none !important; }
+  }
+
+  header.top{
+    padding:28px 20px 14px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,10,13,0.92); backdrop-filter:blur(10px);
+    display:flex; justify-content:space-between; align-items:flex-start;
+  }
+  header.top h1{ font-family:'Cinzel Decorative', serif; font-weight:700; font-size:22px; letter-spacing:0.3px; margin:0 0 2px; }
+  header.top p{ margin:0; font-size:12px; color:var(--ink-dim); letter-spacing:0.5px; }
+  .on-air-group{ display:inline-flex; align-items:center; gap:6px; margin-left:10px; }
+  .rec-dot{ width:9px; height:9px; border-radius:50%; background:#ff3b3b; flex:0 0 auto; animation:recPulse 1.4s infinite ease-in-out; }
+  .on-air-text{ font-size:0.75em; font-family:'Sora', sans-serif; font-weight:400; color:var(--ink-dim); }
+  @keyframes recPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.25; } }
+  .refresh-btn{
+    background:none; border:1px solid var(--line); color:var(--ink-dim);
+    font-size:11px; letter-spacing:0.4px; text-transform:uppercase;
+    padding:6px 10px; border-radius:6px; cursor:pointer; white-space:nowrap;
+  }
+  .refresh-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+
+  nav.projects, nav.categories{ display:flex; gap:6px; overflow-x:auto; padding:14px 20px 0; scrollbar-width:none; }
+  nav.categories{ gap:8px; padding-top:16px; }
+  .project-info{ padding:14px 20px 0; font-size:12.5px; line-height:1.55; color:var(--ink-dim); max-width:560px; }
+  .project-info-text{ display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+  .project-info-text.expanded{ -webkit-line-clamp:unset; overflow:visible; }
+  .project-info-toggle{ background:none; border:none; color:var(--accent); font-size:11px; letter-spacing:0.3px; padding:4px 0 0; cursor:pointer; font-family:'Sora', sans-serif; display:none; }
+  nav.projects::-webkit-scrollbar, nav.categories::-webkit-scrollbar{ display:none; }
+  .project-btn{
+    flex:0 0 auto; background:transparent; border:1px solid var(--line); color:var(--ink-dim);
+    padding:8px 14px; border-radius:999px; font-size:13px; cursor:pointer; white-space:nowrap; transition:all .2s ease;
+  }
+  .project-btn.active{ color:var(--bg); background:var(--ink); border-color:var(--ink); }
+  .cat-btn{
+    flex:0 0 auto; background:none; border:none; color:var(--ink-dim); padding:6px 2px;
+    font-size:13px; letter-spacing:0.4px; text-transform:uppercase; cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .cat-btn.active{ color:var(--ink); border-bottom-color:var(--accent); }
+
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; padding:18px 20px 6px; }
+  .toolbar .count{ font-size:12px; color:var(--ink-dim); }
+  .sort-btn{
+    background:none; border:1px solid var(--line); color:var(--ink-dim);
+    font-size:11px; letter-spacing:0.4px; text-transform:uppercase; padding:5px 10px; border-radius:6px; cursor:pointer;
+  }
+
+  main{ flex:1; padding:6px 20px 20px; }
+
+  .state-msg{ text-align:center; padding:60px 20px; color:var(--ink-dim); font-size:13px; }
+  .hex-halo{ width:52px; height:52px; border-radius:50%; padding:5px; margin:0 auto 18px; background:conic-gradient(from 0deg, #ff3b6b, #ffcf3b, #3bff8f, #3bd4ff, #a13bff, #ff3b6b); animation:hexSpin 1.3s linear infinite; }
+  .hex-halo-inner{ width:100%; height:100%; border-radius:50%; background:var(--bg); }
+  @keyframes hexSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:16px; margin-top:10px; }
+  .card{ cursor:pointer; border-radius:10px; overflow:hidden; background:var(--bg-raised); border:1px solid var(--line); transition:transform .15s ease, border-color .15s ease; }
+  .card:hover{ border-color:var(--accent-dim); transform:translateY(-2px); }
+  .card .cover{ width:100%; aspect-ratio:1/1; background:linear-gradient(160deg,#1c1c22,#0a0a0d); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .card .cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .card .cover .halo{ width:40%; aspect-ratio:1/1; border-radius:50%; background:conic-gradient(from 0deg, var(--accent), var(--cool), var(--accent)); opacity:.35; filter:blur(2px); }
+  .card .meta{ padding:10px 12px 12px; }
+  .card .meta .title{ font-size:13.5px; font-weight:500; line-height:1.3; margin-bottom:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+  .card .meta .date{ font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono', monospace; }
+  .card.empty{ opacity:.55; cursor:default; }
+  .card.empty:hover{ transform:none; border-color:var(--line); }
+
+  .tracklist{ margin-top:8px; }
+  .back-btn{ background:none; border:none; color:var(--ink-dim); font-size:13px; cursor:pointer; padding:0; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+  .track{ display:flex; align-items:center; gap:14px; padding:11px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .track:hover{ background:rgba(255,255,255,0.02); }
+  .track .n{ width:22px; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-dim); }
+  .track .t{ flex:1; font-size:14px; }
+  .track.playing .t, .track.playing .n{ color:var(--accent); }
+
+  .discs-row{ display:flex; gap:12px; overflow-x:auto; padding:0 2px 8px; scrollbar-width:none; }
+  .discs-row::-webkit-scrollbar{ display:none; }
+  .disc-card{ flex:0 0 auto; width:120px; cursor:pointer; opacity:.5; transform:scale(.9); transition:all .25s ease; }
+  .disc-card.active{ opacity:1; transform:scale(1); }
+  .disc-card img, .disc-card .halo-placeholder{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; border:1px solid var(--line); display:block; }
+  .disc-card .halo-placeholder{ background:linear-gradient(160deg,#1c1c22,#0a0a0d); }
+  .disc-tracklist{ animation: discIn .3s ease; }
+  @keyframes discIn{ from{ opacity:0; transform:translateX(14px); } to{ opacity:1; transform:translateX(0); } }
+  .album-title-multi{ font-family:'Sora', sans-serif; font-weight:500; font-size:22px; margin:0 0 2px; }
+  .disc-name-active{ font-size:13px; color:var(--ink-dim); margin:0 0 16px; }
+  .subtitle-row{ display:flex; align-items:center; gap:8px; }
+  .cover-row{ display:flex; align-items:flex-end; gap:14px; margin-bottom:8px; }
+  .share-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); font-size:10px; letter-spacing:0.3px; text-transform:uppercase; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:'Sora', sans-serif; margin-bottom:8px; }
+  .share-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+  .share-btn:hover{ color:var(--accent); }
+  .solo-cover{ width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:8px; }
+
+  .player{
+    position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--bg-raised); border-top:1px solid var(--line);
+    padding:10px 16px; display:flex; align-items:center; gap:14px; transform:translateY(110%); transition:transform .3s ease;
+  }
+  .player.visible{ transform:translateY(0); }
+  .halo-ring{ width:48px; height:48px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; cursor:pointer; background:conic-gradient(#ff3b6b 0%, #ffcf3b calc(var(--pct,0) * 0.2%), #3bff8f calc(var(--pct,0) * 0.4%), #3bd4ff calc(var(--pct,0) * 0.6%), #a13bff calc(var(--pct,0) * 0.8%), #ff3b6b calc(var(--pct,0) * 1%), var(--line) calc(var(--pct,0) * 1%) 100%); padding:3px; }
+  .halo-ring .inner{ width:100%; height:100%; border-radius:50%; background:var(--bg-raised); display:flex; align-items:center; justify-content:center; }
+  .halo-ring svg{ width:16px; height:16px; fill:var(--ink); }
+  .player .info{ flex:1; min-width:0; }
+  .player .info .t{ font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .player .info .a{ font-size:11px; color:var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .player .time{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-dim); flex:0 0 auto; white-space:nowrap; }
+  .player .ctrl{ display:flex; gap:10px; align-items:center; }
+  .player .ctrl button{ background:none; border:none; color:var(--ink); cursor:pointer; padding:4px; }
+  .player .ctrl button svg{ width:18px; height:18px; fill:var(--ink-dim); }
+  .player .ctrl button:hover svg{ fill:var(--ink); }
+  .seek-bar{ position:absolute; top:-8px; left:0; right:0; height:16px; cursor:pointer; }
+  .progress-bar{ position:absolute; top:7px; left:0; width:100%; height:2px; background:linear-gradient(to right, #ff3b6b, #ffcf3b, #3bff8f, #3bd4ff, #a13bff); pointer-events:none; }
+  .seek-remaining{ position:absolute; top:7px; left:0; height:2px; background:var(--line); pointer-events:none; }
+  .seek-bar:hover .progress-bar, .seek-bar:hover .seek-remaining{ height:3px; top:6.5px; }
+
+  footer.credit{ text-align:center; padding:24px 20px 90px; font-size:11px; color:var(--ink-dim); }
+
+  .reel-section{ padding:36px 20px 20px; border-top:1px solid var(--line); margin-top:20px; opacity:0; transition:opacity .6s ease; }
+  .reel-section.visible{ opacity:1; }
+  .reel-label{ text-align:center; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:8px; }
+  .reel-direction-row{ display:flex; justify-content:center; margin-bottom:14px; }
+  .reel-direction-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); font-size:10px; letter-spacing:0.3px; text-transform:uppercase; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:'Sora', sans-serif; }
+  .reel-direction-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+  .reel-viewport{ position:relative; height:170px; overflow:hidden; max-width:560px; margin:0 auto; touch-action:none; cursor:default; }
+  .reel-track{ position:absolute; top:0; left:0; width:100%; will-change:transform; }
+  .reel-row{ height:34px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; white-space:nowrap; overflow:hidden; padding:0 30px; cursor:pointer; }
+  .reel-row .rd{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--cool); flex:0 0 auto; }
+  .reel-row .rt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink); }
+  .reel-fade{ position:absolute; left:0; right:0; height:52px; pointer-events:none; z-index:2; }
+  .reel-fade-top{ top:0; background:linear-gradient(to bottom, var(--bg), transparent); }
+  .reel-fade-bottom{ bottom:0; background:linear-gradient(to top, var(--bg), transparent); }
+
+  .lightbox{ position:fixed; inset:0; background:rgba(5,5,7,0.92); z-index:50; display:none; flex-direction:column; align-items:center; justify-content:center; padding:32px; gap:14px; }
+  .lightbox.visible{ display:flex; }
+  .lightbox img{ max-width:90vw; max-height:80vh; width:auto; height:auto; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  .lightbox-close{ position:absolute; top:18px; right:20px; background:none; border:none; color:var(--ink); font-size:30px; line-height:1; cursor:pointer; padding:6px; }
+  .lightbox-close:hover{ color:var(--accent); }
+  .lightbox-nav{ display:flex; gap:28px; }
+  .lightbox-arrow{ background:none; border:none; color:var(--ink-dim); font-size:14px; cursor:pointer; padding:6px 10px; transition:color .15s ease; }
+  .lightbox-arrow:hover{ color:var(--accent); }
+  .video-frame-wrap{ width:min(90vw, 800px); aspect-ratio:16/9; border-radius:10px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  .video-frame-wrap iframe{ width:100%; height:100%; border:0; display:block; }
+  .video-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); border-radius:50%; width:22px; height:22px; flex:0 0 auto; font-size:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .video-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+  .lyrics-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); border-radius:10px; height:22px; padding:0 8px; flex:0 0 auto; font-size:10px; letter-spacing:0.3px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; }
+  .lyrics-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
+  .lyrics-viewport{ max-width:600px; max-height:70vh; overflow:hidden; position:relative; touch-action:none; margin:0 auto; cursor:default; }
+  .lyrics-content{ text-align:center; font-size:15px; line-height:1.8; color:var(--ink); white-space:pre-wrap; padding:20px; }
+  .lyrics-content strong{ font-weight:700; color:var(--ink); }
+  .lyrics-content em{ font-style:italic; color:var(--ink-dim); }
+</style>
+</head>
+<body>
+<div class="atmosphere" id="atmosphere">
+
+  <!-- ANTELIA · 7 · Resonance / Spectrum / Light — the only multicolor layer -->
+  <div class="atmo-layer atmo-layer-antelia">
+    <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+      <g class="atmo-breathe atmo-antelia-breathe">
+        <circle cx="640" cy="660" r="460" fill="none" stroke="#ff2f7a" stroke-width="0.6" opacity="0.5"/>
+        <circle cx="610" cy="630" r="390" fill="none" stroke="#ff8a3b" stroke-width="0.6" opacity="0.55"/>
+        <circle cx="580" cy="600" r="320" fill="none" stroke="#ffd93b" stroke-width="0.6" opacity="0.6"/>
+        <circle cx="550" cy="560" r="250" fill="none" stroke="#3bd67a" stroke-width="0.6" opacity="0.65"/>
+        <circle cx="520" cy="520" r="185" fill="none" stroke="#3bc8ff" stroke-width="0.6" opacity="0.7"/>
+        <circle cx="490" cy="480" r="125" fill="none" stroke="#6a5cff" stroke-width="0.6" opacity="0.75"/>
+        <circle cx="460" cy="440" r="70" fill="none" stroke="#b23bff" stroke-width="0.65" opacity="0.8"/>
+        <circle cx="640" cy="200" r="3" fill="none" stroke="#ffb0cc" stroke-width="0.5"/>
+        <circle cx="220" cy="630" r="2.2" fill="none" stroke="#bfe9ff" stroke-width="0.5"/>
+        <circle cx="900" cy="580" r="2.6" fill="none" stroke="#ffe5a0" stroke-width="0.5"/>
+        <circle cx="490" cy="900" r="2" fill="none" stroke="#c9b8ff" stroke-width="0.5"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ARIA · 12 · Sky / Constellations / Cycles — ice blue, lines are the protagonist -->
+  <div class="atmo-layer atmo-layer-aria">
+    <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+      <g class="atmo-breathe atmo-aria-breathe">
+        <path class="atmo-line-draw" d="M620,90 L730,230" fill="none" stroke="#bfe3f7" stroke-width="0.55" style="animation-delay:-1s"/>
+        <path class="atmo-line-draw" d="M730,230 L560,300" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-5s"/>
+        <path class="atmo-line-draw" d="M560,300 L430,170" fill="none" stroke="#9fc9e8" stroke-width="0.5" style="animation-delay:-9s"/>
+        <path class="atmo-line-draw" d="M430,170 L280,340" fill="none" stroke="#9fc9e8" stroke-width="0.45" style="animation-delay:-13s"/>
+        <path class="atmo-line-draw" d="M280,340 L380,460" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-17s"/>
+        <path class="atmo-line-draw" d="M380,460 L540,410" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-21s"/>
+        <path class="atmo-line-draw" d="M540,410 L560,300" fill="none" stroke="#9fc9e8" stroke-width="0.4" style="animation-delay:-25s"/>
+        <path class="atmo-line-draw" d="M540,410 L690,500" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-3s"/>
+        <path class="atmo-line-draw" d="M690,500 L830,450" fill="none" stroke="#9fc9e8" stroke-width="0.45" style="animation-delay:-11s"/>
+        <path class="atmo-line-draw" d="M690,500 L730,650" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-19s"/>
+        <path class="atmo-line-draw" d="M730,650 L560,720" fill="none" stroke="#9fc9e8" stroke-width="0.45" style="animation-delay:-27s"/>
+        <path class="atmo-line-draw" d="M560,720 L410,620" fill="none" stroke="#bfe3f7" stroke-width="0.4" style="animation-delay:-7s"/>
+
+        <circle class="atmo-dot" cx="620" cy="90"  r="2.6" fill="#eaf6ff" style="animation-delay:0s"/>
+        <circle class="atmo-dot" cx="730" cy="230" r="2.2" fill="#cfeaff" style="animation-delay:1.5s"/>
+        <circle class="atmo-dot" cx="560" cy="300" r="2.4" fill="#eaf6ff" style="animation-delay:3s"/>
+        <circle class="atmo-dot" cx="430" cy="170" r="2"   fill="#cfeaff" style="animation-delay:4.5s"/>
+        <circle class="atmo-dot" cx="280" cy="340" r="2.2" fill="#eaf6ff" style="animation-delay:6s"/>
+        <circle class="atmo-dot" cx="380" cy="460" r="1.8" fill="#cfeaff" style="animation-delay:7.5s"/>
+        <circle class="atmo-dot" cx="540" cy="410" r="2.4" fill="#eaf6ff" style="animation-delay:9s"/>
+        <circle class="atmo-dot" cx="690" cy="500" r="2"   fill="#cfeaff" style="animation-delay:10.5s"/>
+        <circle class="atmo-dot" cx="830" cy="450" r="2.2" fill="#eaf6ff" style="animation-delay:12s"/>
+        <circle class="atmo-dot" cx="730" cy="650" r="2"   fill="#cfeaff" style="animation-delay:13.5s"/>
+        <circle class="atmo-dot" cx="560" cy="720" r="2.4" fill="#eaf6ff" style="animation-delay:2s"/>
+        <circle class="atmo-dot" cx="410" cy="620" r="1.8" fill="#cfeaff" style="animation-delay:8s"/>
+
+        <circle class="atmo-dot-faint" cx="150" cy="120" r="1.2" fill="#dff0ff" style="animation-delay:1s"/>
+        <circle class="atmo-dot-faint" cx="900" cy="150" r="1"   fill="#dff0ff" style="animation-delay:3s"/>
+        <circle class="atmo-dot-faint" cx="120" cy="560" r="1.3" fill="#dff0ff" style="animation-delay:5s"/>
+        <circle class="atmo-dot-faint" cx="900" cy="720" r="1"   fill="#dff0ff" style="animation-delay:7s"/>
+        <circle class="atmo-dot-faint" cx="220" cy="850" r="1.2" fill="#dff0ff" style="animation-delay:9s"/>
+        <circle class="atmo-dot-faint" cx="800" cy="880" r="1"   fill="#dff0ff" style="animation-delay:11s"/>
+        <circle class="atmo-dot-faint" cx="60"  cy="330" r="1.1" fill="#dff0ff" style="animation-delay:13s"/>
+        <circle class="atmo-dot-faint" cx="950" cy="380" r="1"   fill="#dff0ff" style="animation-delay:15s"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ARKEN · 5 · Deep ocean / bathymetric currents — golden-ratio spaced -->
+  <div class="atmo-layer atmo-layer-arken">
+    <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+      <g class="atmo-breathe atmo-arken-breathe">
+        <path class="atmo-current" d="M0,130 Q220,105 420,132 T1000,120" fill="none" stroke="#4fb8cf" stroke-width="0.6" opacity="0.6" style="animation-delay:0s; animation-duration:34s"/>
+        <path class="atmo-current" d="M0,230 Q260,195 460,232 T1000,215" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-6s; animation-duration:37s"/>
+        <path class="atmo-current" d="M0,380 Q300,335 520,382 T1000,360" fill="none" stroke="#2e7f96" stroke-width="0.55" opacity="0.5" style="animation-delay:-12s; animation-duration:40s"/>
+        <path class="atmo-current" d="M0,590 Q340,540 580,592 T1000,565" fill="none" stroke="#1e5f72" stroke-width="0.5" opacity="0.45" style="animation-delay:-18s; animation-duration:36s"/>
+        <path class="atmo-current" d="M0,850 Q380,800 640,852 T1000,820" fill="none" stroke="#123f4c" stroke-width="0.5" opacity="0.4" style="animation-delay:-24s; animation-duration:39s"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- MANTO · 4 · Creative laboratory / research notebook — warm gray, technical marks -->
+  <div class="atmo-layer atmo-layer-manto">
+    <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+      <g class="atmo-breathe atmo-manto-breathe">
+        <!-- cluster A: axis + circle -->
+        <g class="atmo-mark" style="animation-delay:-2s">
+          <line x1="120" y1="220" x2="330" y2="220" stroke="#9aa3ab" stroke-width="0.5"/>
+          <line x1="220" y1="130" x2="220" y2="320" stroke="#9aa3ab" stroke-width="0.5"/>
+          <circle cx="220" cy="220" r="42" fill="none" stroke="#c9a98c" stroke-width="0.5"/>
+          <circle cx="220" cy="220" r="3" fill="none" stroke="#c9a98c" stroke-width="0.5"/>
+          <line x1="150" y1="150" x2="165" y2="150" stroke="#9aa3ab" stroke-width="0.4"/>
+          <line x1="150" y1="150" x2="150" y2="165" stroke="#9aa3ab" stroke-width="0.4"/>
+        </g>
+        <!-- cluster B: radius / clock + arc -->
+        <g class="atmo-mark" style="animation-delay:-9s">
+          <circle cx="770" cy="260" r="58" fill="none" stroke="#8a95a0" stroke-width="0.5"/>
+          <line x1="770" y1="260" x2="770" y2="204" stroke="#8a95a0" stroke-width="0.45"/>
+          <line x1="770" y1="260" x2="812" y2="288" stroke="#8a95a0" stroke-width="0.4"/>
+          <path d="M700,340 Q740,375 800,360" fill="none" stroke="#c9a98c" stroke-width="0.45"/>
+          <circle cx="770" cy="260" r="2.4" fill="#c9a98c"/>
+        </g>
+        <!-- cluster C: curve + guide -->
+        <g class="atmo-mark" style="animation-delay:-16s">
+          <path class="atmo-line-draw" d="M180,760 Q260,700 320,750 Q380,800 440,745" fill="none" stroke="#c9a98c" stroke-width="0.5" style="animation-delay:-10s"/>
+          <line x1="180" y1="680" x2="180" y2="840" stroke="#8a95a0" stroke-width="0.4"/>
+          <circle cx="320" cy="750" r="2.6" fill="#8a95a0"/>
+        </g>
+        <!-- cluster D: molecule / node graph -->
+        <g class="atmo-mark" style="animation-delay:-22s">
+          <path d="M760,690 L820,660 L880,690 L880,750 L820,780 L760,750 Z" fill="none" stroke="#8a95a0" stroke-width="0.45"/>
+          <circle cx="760" cy="690" r="2.2" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
+          <circle cx="880" cy="750" r="2.2" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
+          <circle cx="820" cy="660" r="2.2" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
+          <line x1="820" y1="660" x2="820" y2="600" stroke="#8a95a0" stroke-width="0.4"/>
+          <circle cx="820" cy="600" r="2.4" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- MAURO FUENTES · 1 · The author / the origin — sobriety, architectural plan -->
+  <div class="atmo-layer atmo-layer-mauro">
+    <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+      <g class="atmo-breathe atmo-mauro-breathe">
+        <line x1="60" y1="500" x2="940" y2="500" stroke="#8a8a8a" stroke-width="0.45"/>
+        <line x1="500" y1="80" x2="500" y2="920" stroke="#8a8a8a" stroke-width="0.45"/>
+        <circle cx="500" cy="500" r="20" fill="none" stroke="#a0a0a0" stroke-width="0.5"/>
+        <circle cx="500" cy="500" r="3" fill="none" stroke="#a0a0a0" stroke-width="0.5"/>
+        <line class="atmo-mark" x1="260" y1="490" x2="260" y2="510" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-4s"/>
+        <line class="atmo-mark" x1="740" y1="490" x2="740" y2="510" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-14s"/>
+        <line class="atmo-mark" x1="490" y1="240" x2="510" y2="240" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-9s"/>
+        <line class="atmo-mark" x1="490" y1="760" x2="510" y2="760" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-19s"/>
+        <circle class="atmo-mark" cx="260" cy="500" r="2" fill="none" stroke="#a0a0a0" stroke-width="0.4" style="animation-delay:-6s"/>
+        <circle class="atmo-mark" cx="740" cy="500" r="2" fill="none" stroke="#a0a0a0" stroke-width="0.4" style="animation-delay:-16s"/>
+      </g>
+    </svg>
+  </div>
+
+</div>
+<div class="atmo-noise"></div>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>The Anti™ Radio <span class="on-air-group"><span class="rec-dot"></span><span class="on-air-text">On Air</span></span></h1>
+      <p id="subtitle">The Antelia™ Experience</p>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">Retune</button>
+  </header>
+
+  <nav class="projects" id="projectNav"></nav>
+  <div class="project-info" id="projectInfo">
+    <div class="project-info-text" id="projectInfoText"></div>
+    <button class="project-info-toggle" id="projectInfoToggle">Read more</button>
+  </div>
+  <nav class="categories" id="categoryNav"></nav>
+
+  <div class="toolbar">
+    <span class="count" id="countLabel"></span>
+    <button class="sort-btn" id="sortBtn">Newest</button>
+  </div>
+
+  <main id="main"><div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Dialing into the HEX...</div></main>
+
+  <section class="reel-section" id="reelSection" style="display:none">
+    <div class="reel-label">Spin the Cylinder</div>
+    <div class="reel-direction-row">
+      <button class="reel-direction-btn" id="reelDirectionBtn">Rollin' Down</button>
+    </div>
+    <div class="reel-viewport" id="reelViewport">
+      <div class="reel-fade reel-fade-top"></div>
+      <div class="reel-track" id="reelTrack"></div>
+      <div class="reel-fade reel-fade-bottom"></div>
+    </div>
+  </section>
+
+  <footer class="credit">The Complete Discography of Mauro Fuentes</footer>
+</div>
+
+<div class="player" id="player">
+  <div class="seek-bar" id="seekBar"><div class="progress-bar" id="progressBar"></div><div class="seek-remaining" id="seekRemaining"></div></div>
+  <div class="halo-ring" id="playToggle"><div class="inner"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+  <div class="info">
+    <div class="t" id="nowTitle">—</div>
+    <div class="a" id="nowAlbum">Tap a track to begin</div>
+  </div>
+  <div class="time" id="timeDisplay">0:00 / 0:00</div>
+  <div class="ctrl">
+    <button id="prevBtn" title="Previous"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+    <button id="nextBtn" title="Next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+  </div>
+</div>
+
+<audio id="audio"></audio>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <img id="lightboxImg" src="" alt="Enlarged cover">
+  <div class="lightbox-nav" id="lightboxNav">
+    <button class="lightbox-arrow" id="lightboxPrev" aria-label="Previous">◀</button>
+    <button class="lightbox-arrow" id="lightboxNext" aria-label="Next">▶</button>
+  </div>
+</div>
+
+<div class="lightbox" id="videoLightbox">
+  <button class="lightbox-close" id="videoLightboxClose" aria-label="Close">&times;</button>
+  <div class="video-frame-wrap"><iframe id="videoLightboxFrame" src="" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe></div>
+  <div class="lightbox-nav" id="videoLightboxNav">
+    <button class="lightbox-arrow" id="videoLightboxPrev" aria-label="Previous">◀</button>
+    <button class="lightbox-arrow" id="videoLightboxNext" aria-label="Next">▶</button>
+  </div>
+</div>
+
+<div class="lightbox" id="lyricsLightbox">
+  <button class="lightbox-close" id="lyricsLightboxClose" aria-label="Close">&times;</button>
+  <div class="lyrics-viewport" id="lyricsViewport">
+    <div class="lyrics-content" id="lyricsContent"></div>
+  </div>
+</div>
+
+<script>
+/* ======================================================
+   CONFIG — replace this with your own key
+   ====================================================== */
+const API_KEY = 'AIzaSyC_WhqaOc4ewDFlwdAf1nc2zVWzfLRLrJk';
+const ROOT_FOLDER_ID = '1h5MrREPfZxbtxag4FXFIACUmMxqz1lV0';
+const CACHE_KEY = 'antelia-catalog-cache-v2';
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function driveImg(id){ return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w600'; }
+function driveAudio(id){ return 'https://www.googleapis.com/drive/v3/files/' + id + '?alt=media&key=' + API_KEY; }
+
+function youtubeEmbedUrl(url){
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+  return m ? 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1&rel=0' : null;
+}
+
+async function driveList(parentId){
+  const q = encodeURIComponent("'" + parentId + "' in parents and trashed = false");
+  const url = 'https://www.googleapis.com/drive/v3/files?q=' + q +
+    '&orderBy=name&fields=files(id,name,mimeType)&pageSize=300&key=' + API_KEY;
+  const res = await fetch(url);
+  if (!res.ok){
+    const err = await res.json().catch(() => ({}));
+    throw new Error('Drive API error: ' + (err.error?.message || res.status));
+  }
+  const data = await res.json();
+  return data.files || [];
+}
+
+function isFolder(f){ return f.mimeType === 'application/vnd.google-apps.folder'; }
+function isAudio(f){ return f.mimeType === 'audio/mpeg' || /\.mp3$/i.test(f.name); }
+function isImage(f){ return f.mimeType && f.mimeType.startsWith('image/'); }
+
+function pickCoverImage(images){
+  if (!images.length) return null;
+  const scored = images.map(img => {
+    const n = img.name.toLowerCase();
+    let score = 0;
+    if (/\(art by/.test(n)) score += 200;
+    if (/\bfront\b/.test(n)) score += 100;
+    if (/\bcover\b/.test(n)) score += 90;
+    if (/\bfolder\b/.test(n)) score += 80;
+    if (/\b(back|booklet|inside|insert|disc|cd|liner|tray|contra|photo shoot|shoot)\b/.test(n)) score -= 60;
+    return { img, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].img;
+}
+
+function parseAlbumName(name){
+  const m = name.match(/^\[(\d{4})\.(\d{2})\.(\d{2})\]\s*(.*)$/);
+  if (m) return { title: m[4], date: m[1] + '.' + m[2] + '.' + m[3] };
+  return { title: name, date: '' };
+}
+
+function parseTrackName(name){
+  const m = name.match(/^(\d+)\.\s*(.*)\.mp3$/i);
+  if (m) return { n: parseInt(m[1], 10), title: m[2] };
+  return { n: 0, title: name.replace(/\.mp3$/i, '') };
+}
+
+async function mapLimit(items, limit, fn){
+  const results = new Array(items.length);
+  let index = 0;
+  async function worker(){
+    while (index < items.length){
+      const current = index++;
+      try {
+        results[current] = await fn(items[current], current);
+      } catch(e){
+        console.error('mapLimit item failed:', items[current] && items[current].name, e);
+        results[current] = null;
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+function buildCoverSet(imageFiles){
+  if (!imageFiles.length) return { cover: null, images: [] };
+  const best = pickCoverImage(imageFiles);
+  const ordered = [best, ...imageFiles.filter(f => f.id !== best.id)];
+  return { cover: driveImg(best.id), images: ordered.map(f => driveImg(f.id)) };
+}
+
+function parseVideoText(text){
+  const map = {};
+  const blocks = text.split(/\r?\n\s*\r?\n/);
+  blocks.forEach(block => {
+    const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return;
+    const header = lines[0].replace(/^\d+\.\s*/, '').replace(/\.mp3$/i, '').trim().toLowerCase();
+    const urls = lines.slice(1).filter(l => /^https?:\/\//i.test(l));
+    if (urls.length) map[header] = urls;
+  });
+  return map;
+}
+
+async function fetchVideoMap(folderContents){
+  const vidFile = folderContents.find(f => f.name && f.name.toLowerCase() === 'vid');
+  if (!vidFile) return {};
+  try {
+    const res = await fetch('https://www.googleapis.com/drive/v3/files/' + vidFile.id + '?alt=media&key=' + API_KEY);
+    if (!res.ok) return {};
+    const text = await res.text();
+    return parseVideoText(text);
+  } catch(e){
+    console.error('Failed to load VID file', e);
+    return {};
+  }
+}
+
+function attachVideos(tracks, videoMap){
+  return tracks.map(t => ({ ...t, videos: videoMap[t.title.toLowerCase()] || [] }));
+}
+
+function parseLyricsText(text){
+  const lines = text.split(/\r?\n/);
+  const map = {};
+  const headerRe = /^\d+\.\s*(.*)$/;
+  let currentKey = null;
+  let currentLines = [];
+
+  function flush(){
+    if (currentKey === null) return;
+    while (currentLines.length && currentLines[0].trim() === '') currentLines.shift();
+    while (currentLines.length && currentLines[currentLines.length - 1].trim() === '') currentLines.pop();
+    if (currentLines.length) map[currentKey] = currentLines.join('\n');
+  }
+
+  lines.forEach(rawLine => {
+    const m = rawLine.match(headerRe);
+    if (m){
+      flush();
+      currentKey = m[1].replace(/\.mp3$/i, '').trim().toLowerCase();
+      currentLines = [];
+    } else if (currentKey !== null){
+      if (currentLines.length === 0 && rawLine.trim().toLowerCase() === currentKey){
+        return;
+      }
+      currentLines.push(rawLine);
+    }
+  });
+  flush();
+  return map;
+}
+
+async function fetchLyricsMap(folderContents){
+  const lyrFile = folderContents.find(f => f.name && f.name.toLowerCase() === 'lyr');
+  if (!lyrFile) return {};
+  try {
+    const res = await fetch('https://www.googleapis.com/drive/v3/files/' + lyrFile.id + '?alt=media&key=' + API_KEY);
+    if (!res.ok) return {};
+    const text = await res.text();
+    return parseLyricsText(text);
+  } catch(e){
+    console.error('Failed to load LYR file', e);
+    return {};
+  }
+}
+
+function attachLyrics(tracks, lyricsMap){
+  return tracks.map(t => ({ ...t, lyrics: lyricsMap[t.title.toLowerCase()] || null }));
+}
+
+async function buildAlbum(folder){
+  const contents = await driveList(folder.id);
+  const directTracks = contents.filter(isAudio).map(f => {
+    const parsed = parseTrackName(f.name);
+    return { n: parsed.n, title: parsed.title, id: f.id };
+  }).sort((a, b) => a.n - b.n);
+
+  const subfolders = contents.filter(f => isFolder(f) && f.name.toLowerCase() !== 'cover art');
+  const { title, date } = parseAlbumName(folder.name);
+
+  if (directTracks.length === 0 && subfolders.length > 0){
+    const discResults = await mapLimit(subfolders, 5, async (sub) => {
+      const subContents = await driveList(sub.id);
+      const tracks = subContents.filter(isAudio).map(f => {
+        const parsed = parseTrackName(f.name);
+        return { n: parsed.n, title: parsed.title, id: f.id };
+      }).sort((a, b) => a.n - b.n);
+
+      let discCover = null;
+      let discImages = [];
+      const subCoverFolder = subContents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
+      const subCoverFolderContents = subCoverFolder ? await driveList(subCoverFolder.id) : subContents;
+      const subCoverFiles = subCoverFolderContents.filter(isImage);
+      ({ cover: discCover, images: discImages } = buildCoverSet(subCoverFiles));
+      const subVideoMap = await fetchVideoMap(subCoverFolderContents);
+      const subLyricsMap = await fetchLyricsMap(subCoverFolderContents);
+      const releaseVideos = subVideoMap['release'] || [];
+      const tracksWithExtras = attachLyrics(attachVideos(tracks, subVideoMap), subLyricsMap);
+      return { name: sub.name, cover: discCover, images: discImages, tracks: tracksWithExtras, releaseVideos };
+    });
+    const discs = discResults.filter(Boolean);
+    return { title, date, multiDisc: true, discs, cover: discs[0]?.cover || null, tracks: [] };
+  }
+
+  let cover = null;
+  let images = [];
+  const coverFolder = contents.find(f => isFolder(f) && f.name.toLowerCase() === 'cover art');
+  const coverFolderContents = coverFolder ? await driveList(coverFolder.id) : contents;
+  const coverFiles = coverFolderContents.filter(isImage);
+  ({ cover, images } = buildCoverSet(coverFiles));
+  const videoMap = await fetchVideoMap(coverFolderContents);
+  const lyricsMap = await fetchLyricsMap(coverFolderContents);
+  const releaseVideos = videoMap['release'] || [];
+  const tracksWithVideo = attachLyrics(attachVideos(directTracks, videoMap), lyricsMap);
+  return { title, date, cover, images, tracks: tracksWithVideo, multiDisc: false, discs: [{ name: title, cover, images, tracks: tracksWithVideo, releaseVideos }] };
+}
+
+async function buildCatalog(){
+  const projects = await driveList(ROOT_FOLDER_ID);
+  const projectFolders = projects.filter(isFolder);
+
+  const projectResults = await mapLimit(projectFolders, 3, async (proj) => {
+    const categories = await driveList(proj.id);
+    const categoryFolders = categories.filter(isFolder);
+
+    const categoryResults = await mapLimit(categoryFolders, 3, async (cat) => {
+      const albumFolders = await driveList(cat.id);
+      const items = await mapLimit(albumFolders.filter(isFolder), 5, (alb) => buildAlbum(alb));
+      return { id: cat.id, label: cat.name.replace(/^The\s+/i, ''), items: items.filter(Boolean) };
+    });
+
+    const catObj = {};
+    categoryResults.forEach((c) => { catObj[c.id] = { label: c.label, items: c.items }; });
+    return { id: proj.id, label: proj.name, categories: catObj };
+  });
+
+  const catalog = {};
+  projectResults.forEach((p) => { catalog[p.id] = { label: p.label, categories: p.categories }; });
+  return catalog;
+}
+
+async function getCatalog(forceRefresh){
+  if (!forceRefresh){
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (cached && (Date.now() - cached.time) < CACHE_TTL_MS){
+        return cached.data;
+      }
+    } catch(e){}
+  }
+  const data = await buildCatalog();
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data }));
+  } catch(e){}
+  return data;
+}
+
+/* ======================================================
+   UI / state
+   ====================================================== */
+let CATALOG = null;
+let state = { project: null, category: null, album: null, sortDesc: true, queue: [], qIndex: -1, currentAlbumTitle: '', chronoMode: false, chronoIndex: -1, chronoStep: 1 };
+
+const projectNav = document.getElementById('projectNav');
+const categoryNav = document.getElementById('categoryNav');
+const projectInfo = document.getElementById('projectInfo');
+const main = document.getElementById('main');
+const countLabel = document.getElementById('countLabel');
+const sortBtn = document.getElementById('sortBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+
+const CATEGORY_PRIORITY = ['albums', 'extended', 'singles', 'lives', 'collabs', 'specials'];
+
+function sortedCategoryKeys(project){
+  const cats = CATALOG[project].categories;
+  return Object.keys(cats).sort((a, b) => {
+    const rankA = CATEGORY_PRIORITY.indexOf(cats[a].label.toLowerCase());
+    const rankB = CATEGORY_PRIORITY.indexOf(cats[b].label.toLowerCase());
+    const ra = rankA === -1 ? CATEGORY_PRIORITY.length : rankA;
+    const rb = rankB === -1 ? CATEGORY_PRIORITY.length : rankB;
+    return ra - rb;
+  });
+}
+
+const PROJECT_INFO = {
+  'Antelia': 'Brings every dimension of a single artistic journey together, where songwriting, performance, and production become one shared language.',
+  'ARIA': 'The origin of this creative universe. A band where identity, trust, and perseverance shaped a body of work that continues to write its story.',
+  'Arken': 'A meeting of different artistic paths that propelled this work toward new horizons through collaboration and a shared vision.',
+  'Manto': 'A laboratory where creative freedom replaced convention, allowing every idea to discover its own way of existing.',
+  'Mauro Fuentes': 'The most intimate record of this journey. A place where early ideas, experiments, and the person behind every chapter remain.'
+};
+
+function renderProjectInfo(){
+  const label = CATALOG[state.project] ? CATALOG[state.project].label : '';
+  const text = PROJECT_INFO[label];
+  const textEl = document.getElementById('projectInfoText');
+  const toggleBtn = document.getElementById('projectInfoToggle');
+  textEl.classList.remove('expanded');
+  toggleBtn.textContent = 'Read more';
+  toggleBtn.style.display = 'none';
+  toggleBtn.onclick = null;
+  if (!text){ textEl.innerHTML = ''; return; }
+  textEl.innerHTML = text;
+  requestAnimationFrame(() => {
+    if (textEl.scrollHeight > textEl.clientHeight + 1){
+      toggleBtn.style.display = 'block';
+      toggleBtn.onclick = () => {
+        const expanded = textEl.classList.toggle('expanded');
+        toggleBtn.textContent = expanded ? 'Read less' : 'Read more';
+      };
+    }
+  });
+}
+
+const PROJECT_BG_CLASS = { 'Antelia': 'proj-antelia', 'ARIA': 'proj-aria', 'Arken': 'proj-arken', 'Manto': 'proj-manto', 'Mauro Fuentes': 'proj-mauro' };
+
+function applyProjectAtmosphere(){
+  const atmosphere = document.getElementById('atmosphere');
+  if (!atmosphere) return;
+  const label = CATALOG[state.project] ? CATALOG[state.project].label : null;
+  const cls = PROJECT_BG_CLASS[label] || 'proj-antelia';
+  Object.values(PROJECT_BG_CLASS).forEach(c => atmosphere.classList.remove(c));
+  atmosphere.classList.add(cls);
+}
+
+function renderProjects(){
+  projectNav.innerHTML = '';
+  Object.keys(CATALOG).forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'project-btn' + (state.project === key ? ' active' : '');
+    btn.textContent = CATALOG[key].label;
+    btn.onclick = () => {
+      state.project = key;
+      state.category = sortedCategoryKeys(key)[0] || null;
+      state.album = null;
+      renderAll();
+    };
+    projectNav.appendChild(btn);
+  });
+  renderProjectInfo();
+  applyProjectAtmosphere();
+}
+
+function renderCategories(){
+  categoryNav.innerHTML = '';
+  if (!state.project) return;
+  const cats = CATALOG[state.project].categories;
+  sortedCategoryKeys(state.project).forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (state.category === key ? ' active' : '');
+    btn.textContent = cats[key].label;
+    btn.onclick = () => { state.category = key; state.album = null; renderAll(); };
+    categoryNav.appendChild(btn);
+  });
+}
+
+function renderMain(){
+  main.innerHTML = '';
+  if (!state.project || !state.category) return;
+  if (state.album){
+    renderAlbumView(state.album);
+    countLabel.textContent = '';
+    sortBtn.style.display = 'none';
+    return;
+  }
+  sortBtn.style.display = 'inline-block';
+  const cat = CATALOG[state.project].categories[state.category];
+  let items = cat.items.slice();
+  items.sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    const dateCmp = state.sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
+    if (dateCmp !== 0) return dateCmp;
+    const titleCmp = a.title.localeCompare(b.title);
+    return state.sortDesc ? -titleCmp : titleCmp;
+  });
+  countLabel.textContent = items.length + (items.length === 1 ? ' release' : ' releases');
+
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  items.forEach(item => {
+    const hasTracks = (item.tracks && item.tracks.length > 0) ||
+      (item.multiDisc && item.discs && item.discs.some(d => d.tracks.length > 0));
+    const card = document.createElement('div');
+    card.className = 'card' + (hasTracks ? '' : ' empty');
+    const cover = document.createElement('div');
+    cover.className = 'cover';
+    if (item.cover){
+      const img = document.createElement('img');
+      img.src = item.cover;
+      img.loading = 'lazy';
+      cover.appendChild(img);
+    } else {
+      const halo = document.createElement('div');
+      halo.className = 'halo';
+      cover.appendChild(halo);
+    }
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = '<div class="title" title="' + item.title.replace(/"/g, '&quot;') + '">' + item.title + '</div>' +
+      (item.date ? '<div class="date">' + item.date + '</div>' : '');
+    card.appendChild(cover);
+    card.appendChild(meta);
+    if (hasTracks) card.onclick = () => { state.album = item; state.discIndex = 0; renderAll(); };
+    grid.appendChild(card);
+  });
+  main.appendChild(grid);
+}
+
+function renderAlbumView(album){
+  if (typeof state.discIndex !== 'number') state.discIndex = 0;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tracklist';
+
+  const back = document.createElement('button');
+  back.className = 'back-btn';
+  back.innerHTML = '← back';
+  back.onclick = () => { state.album = null; state.discIndex = 0; renderAll(); };
+  wrap.appendChild(back);
+
+  const albumTitle = document.createElement('div');
+  albumTitle.className = 'album-title-multi';
+  albumTitle.textContent = album.title;
+  wrap.appendChild(albumTitle);
+
+  if (album.date){
+    const albumDate = document.createElement('div');
+    albumDate.className = 'disc-name-active';
+    albumDate.textContent = album.date;
+    wrap.appendChild(albumDate);
+  }
+
+  const currentDisc = album.discs[state.discIndex];
+
+  const subtitleText = document.createElement('div');
+  subtitleText.className = 'disc-name-active subtitle-row';
+  const subtitleLabel = document.createElement('span');
+  subtitleLabel.textContent = album.multiDisc ? currentDisc.name : album.title;
+  subtitleText.appendChild(subtitleLabel);
+  if (currentDisc.releaseVideos && currentDisc.releaseVideos.length){
+    const vidBtn = document.createElement('button');
+    vidBtn.className = 'video-btn';
+    vidBtn.title = 'Watch video';
+    vidBtn.textContent = '▶';
+    vidBtn.onclick = () => openVideoLightbox(currentDisc.releaseVideos, 0);
+    subtitleText.appendChild(vidBtn);
+  }
+  wrap.appendChild(subtitleText);
+
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'share-btn';
+  shareBtn.textContent = 'Share';
+  shareBtn.onclick = (e) => { e.stopPropagation(); shareRelease(album, shareBtn); };
+
+  const coverRow = document.createElement('div');
+  coverRow.className = 'cover-row';
+
+  if (album.multiDisc){
+    const discsRow = document.createElement('div');
+    discsRow.className = 'discs-row';
+    album.discs.forEach((disc, i) => {
+      const card = document.createElement('div');
+      card.className = 'disc-card' + (i === state.discIndex ? ' active' : '');
+      card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>');
+      card.onclick = () => {
+        if (i === state.discIndex){
+          if (disc.cover) openLightbox(disc.images, 0);
+        } else {
+          state.discIndex = i;
+          renderMain();
+        }
+      };
+      discsRow.appendChild(card);
+    });
+    coverRow.appendChild(discsRow);
+    coverRow.appendChild(shareBtn);
+    wrap.appendChild(coverRow);
+  } else if (currentDisc.cover){
+    const soloCover = document.createElement('img');
+    soloCover.className = 'solo-cover';
+    soloCover.style.cursor = 'pointer';
+    soloCover.src = currentDisc.cover;
+    soloCover.onclick = () => openLightbox(currentDisc.images, 0);
+    coverRow.appendChild(soloCover);
+    coverRow.appendChild(shareBtn);
+    wrap.appendChild(coverRow);
+  }
+
+  const trackWrap = document.createElement('div');
+  trackWrap.className = 'disc-tracklist';
+  currentDisc.tracks.forEach((tr, i) => {
+    const row = document.createElement('div');
+    row.className = 'track';
+    row.dataset.idx = i;
+    const hasVideo = tr.videos && tr.videos.length > 0;
+    const hasLyrics = !!tr.lyrics;
+    row.innerHTML = '<div class="n">' + String(tr.n).padStart(2, '0') + '</div><div class="t">' + tr.title + '</div>' +
+      (hasVideo ? '<button class="video-btn" title="Watch video">▶</button>' : '') +
+      (hasLyrics ? '<button class="lyrics-btn" title="View lyrics">lyrics</button>' : '');
+    row.onclick = () => playDiscTrack(currentDisc.tracks, album.multiDisc ? (album.title + ' — ' + currentDisc.name) : album.title, i);
+    if (hasVideo){
+      row.querySelector('.video-btn').onclick = (e) => { e.stopPropagation(); openVideoLightbox(tr.videos, 0); };
+    }
+    if (hasLyrics){
+      row.querySelector('.lyrics-btn').onclick = (e) => { e.stopPropagation(); openLyrics(tr.lyrics); };
+    }
+    trackWrap.appendChild(row);
+  });
+  wrap.appendChild(trackWrap);
+
+  main.appendChild(wrap);
+}
+
+function playDiscTrack(tracks, label, idx){
+  state.chronoMode = false;
+  state.queue = tracks;
+  state.qIndex = idx;
+  state.currentAlbumTitle = label;
+  loadAndPlay();
+}
+
+function renderAll(){
+  renderProjects();
+  renderCategories();
+  renderMain();
+}
+
+sortBtn.onclick = () => {
+  state.sortDesc = !state.sortDesc;
+  sortBtn.textContent = state.sortDesc ? 'Newest' : 'Oldest';
+  renderMain();
+};
+
+refreshBtn.onclick = async () => {
+  refreshBtn.textContent = 'Retuning…';
+  refreshBtn.disabled = true;
+  main.innerHTML = '<div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Retuning into the HEX...</div>';
+  try {
+    CATALOG = await getCatalog(true);
+    if (!state.project || !CATALOG[state.project]) state.project = Object.keys(CATALOG)[0];
+    renderAll();
+    renderReel();
+  } catch(e){
+    main.innerHTML = '<div class="state-msg">Could not refresh: ' + e.message + '</div>';
+  }
+  refreshBtn.textContent = 'Retune';
+  refreshBtn.disabled = false;
+};
+
+/* Player */
+const audio = document.getElementById('audio');
+const player = document.getElementById('player');
+const playToggle = document.getElementById('playToggle');
+const playIcon = document.getElementById('playIcon');
+const nowTitle = document.getElementById('nowTitle');
+const nowAlbum = document.getElementById('nowAlbum');
+const timeDisplay = document.getElementById('timeDisplay');
+const seekBar = document.getElementById('seekBar');
+const progressBar = document.getElementById('progressBar');
+const seekRemaining = document.getElementById('seekRemaining');
+const haloRing = document.querySelector('.halo-ring');
+
+let prefetchedTrack = { id: null, blobUrl: null };
+
+function prefetchNextTrack(){
+  const nextIdx = state.qIndex + 1;
+  if (nextIdx >= state.queue.length) return;
+  const nextTrack = state.queue[nextIdx];
+  if (!nextTrack || prefetchedTrack.id === nextTrack.id) return;
+  fetch(driveAudio(nextTrack.id))
+    .then(r => (r.ok ? r.blob() : null))
+    .then(blob => {
+      if (!blob) return;
+      if (prefetchedTrack.blobUrl) URL.revokeObjectURL(prefetchedTrack.blobUrl);
+      prefetchedTrack = { id: nextTrack.id, blobUrl: URL.createObjectURL(blob) };
+    })
+    .catch(() => {});
+}
+
+function loadAndPlay(){
+  const track = state.queue[state.qIndex];
+  if (!track) return;
+  if (prefetchedTrack.id === track.id && prefetchedTrack.blobUrl){
+    audio.src = prefetchedTrack.blobUrl;
+  } else {
+    audio.src = driveAudio(track.id);
+  }
+  audio.play().catch(()=>{});
+  nowTitle.textContent = track.title;
+  nowAlbum.textContent = state.currentAlbumTitle;
+  timeDisplay.textContent = '0:00 / 0:00';
+  seekRemaining.style.left = '0%';
+  seekRemaining.style.width = '100%';
+  haloRing.style.setProperty('--pct', 0);
+  player.classList.add('visible');
+  updatePlayIcon(true);
+  highlightPlayingRow(state.qIndex);
+  updateMediaSession(track);
+  prefetchNextTrack();
+}
+function highlightPlayingRow(idx){
+  document.querySelectorAll('.track').forEach(r => r.classList.remove('playing'));
+  const row = document.querySelector('.track[data-idx="' + idx + '"]');
+  if (row) row.classList.add('playing');
+}
+function updatePlayIcon(playing){
+  playIcon.innerHTML = playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+}
+playToggle.onclick = () => {
+  if (!audio.src) return;
+  if (audio.paused){ audio.play(); updatePlayIcon(true); } else { audio.pause(); updatePlayIcon(false); }
+};
+function goToPrevTrack(){
+  if (state.qIndex > 0){ state.qIndex--; loadAndPlay(); }
+  else if (state.chronoMode){ retreatChrono(); }
+}
+function goToNextTrack(){
+  if (state.qIndex < state.queue.length - 1){ state.qIndex++; loadAndPlay(); }
+  else if (state.chronoMode){ advanceChrono(); }
+}
+function updateMediaSession(track){
+  if (!('mediaSession' in navigator)) return;
+  let artwork = [];
+  const disc = state.album && state.album.discs ? state.album.discs[state.discIndex] : null;
+  if (disc && disc.cover){
+    artwork = [{ src: disc.cover, sizes: '512x512', type: 'image/png' }];
+  }
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.title,
+    artist: state.currentAlbumTitle || 'The Anti™ Radio',
+    album: 'The Anti™ Radio',
+    artwork: artwork
+  });
+}
+
+if ('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play', () => { audio.play(); });
+  navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); });
+  navigator.mediaSession.setActionHandler('previoustrack', goToPrevTrack);
+  navigator.mediaSession.setActionHandler('nexttrack', goToNextTrack);
+  navigator.mediaSession.setActionHandler('seekto', (details) => {
+    if (details.seekTime != null && audio.duration){ audio.currentTime = details.seekTime; }
+  });
+  audio.addEventListener('play', () => { navigator.mediaSession.playbackState = 'playing'; });
+  audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
+}
+
+document.getElementById('prevBtn').onclick = goToPrevTrack;
+document.getElementById('nextBtn').onclick = goToNextTrack;
+audio.addEventListener('ended', () => {
+  if (state.qIndex < state.queue.length - 1){
+    state.qIndex++;
+    loadAndPlay();
+  } else if (state.chronoMode){
+    advanceChrono();
+  } else {
+    state.qIndex = 0;
+    loadAndPlay();
+  }
+});
+audio.addEventListener('error', () => {
+  console.error('Audio failed to load:', audio.src);
+  nowAlbum.textContent = "Couldn't load this track — skipping…";
+  setTimeout(() => {
+    if (state.qIndex < state.queue.length - 1){
+      state.qIndex++;
+      loadAndPlay();
+    } else if (state.chronoMode){
+      advanceChrono();
+    }
+  }, 1200);
+});
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  seekRemaining.style.left = pct + '%';
+  seekRemaining.style.width = (100 - pct) + '%';
+  haloRing.style.setProperty('--pct', pct.toFixed(1));
+  timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+});
+
+function formatTime(sec){
+  if (!isFinite(sec) || sec < 0) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+let seeking = false;
+function seekFromEvent(e){
+  if (!audio.duration) return;
+  const rect = seekBar.getBoundingClientRect();
+  const pct = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+  audio.currentTime = pct * audio.duration;
+  seekRemaining.style.left = (pct * 100) + '%';
+  seekRemaining.style.width = (100 - pct * 100) + '%';
+  haloRing.style.setProperty('--pct', (pct * 100).toFixed(1));
+}
+seekBar.addEventListener('pointerdown', (e) => { seeking = true; seekFromEvent(e); });
+window.addEventListener('pointermove', (e) => { if (seeking) seekFromEvent(e); });
+window.addEventListener('pointerup', () => { seeking = false; });
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+
+/* Lightbox */
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+const lightboxNav = document.getElementById('lightboxNav');
+let lightboxImages = [];
+let lightboxIndex = 0;
+
+function openLightbox(images, startIndex){
+  lightboxImages = (images && images.length) ? images : [];
+  lightboxIndex = startIndex >= 0 ? startIndex : 0;
+  renderLightbox();
+  lightbox.classList.add('visible');
+}
+function renderLightbox(){
+  if (!lightboxImages.length) return;
+  lightboxImg.src = lightboxImages[lightboxIndex];
+  lightboxNav.style.display = lightboxImages.length > 1 ? 'flex' : 'none';
+}
+function lightboxPrevImg(){
+  lightboxIndex = (lightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+  renderLightbox();
+}
+function lightboxNextImg(){
+  lightboxIndex = (lightboxIndex + 1) % lightboxImages.length;
+  renderLightbox();
+}
+function closeLightbox(){
+  lightbox.classList.remove('visible');
+  lightboxImg.src = '';
+}
+document.getElementById('lightboxClose').onclick = closeLightbox;
+document.getElementById('lightboxPrev').onclick = lightboxPrevImg;
+document.getElementById('lightboxNext').onclick = lightboxNextImg;
+lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if (!lightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lightboxPrevImg();
+  if (e.key === 'ArrowRight') lightboxNextImg();
+});
+
+/* Video lightbox */
+const videoLightbox = document.getElementById('videoLightbox');
+const videoLightboxFrame = document.getElementById('videoLightboxFrame');
+const videoLightboxNav = document.getElementById('videoLightboxNav');
+let lightboxVideos = [];
+let videoLightboxIndex = 0;
+
+function openVideoLightbox(videos, startIndex){
+  if (!audio.paused){
+    audio.pause();
+    updatePlayIcon(false);
+  }
+  lightboxVideos = (videos && videos.length) ? videos : [];
+  videoLightboxIndex = startIndex >= 0 ? startIndex : 0;
+  updateVideoLightbox();
+  videoLightbox.classList.add('visible');
+}
+function updateVideoLightbox(){
+  if (!lightboxVideos.length) return;
+  const embed = youtubeEmbedUrl(lightboxVideos[videoLightboxIndex]);
+  videoLightboxFrame.src = embed || '';
+  videoLightboxNav.style.display = lightboxVideos.length > 1 ? 'flex' : 'none';
+}
+function videoLightboxPrevVid(){
+  videoLightboxIndex = (videoLightboxIndex - 1 + lightboxVideos.length) % lightboxVideos.length;
+  updateVideoLightbox();
+}
+function videoLightboxNextVid(){
+  videoLightboxIndex = (videoLightboxIndex + 1) % lightboxVideos.length;
+  updateVideoLightbox();
+}
+function closeVideoLightbox(){
+  videoLightbox.classList.remove('visible');
+  videoLightboxFrame.src = '';
+}
+document.getElementById('videoLightboxClose').onclick = closeVideoLightbox;
+document.getElementById('videoLightboxPrev').onclick = videoLightboxPrevVid;
+document.getElementById('videoLightboxNext').onclick = videoLightboxNextVid;
+videoLightbox.addEventListener('click', (e) => { if (e.target === videoLightbox) closeVideoLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if (!videoLightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape') closeVideoLightbox();
+  if (e.key === 'ArrowLeft') videoLightboxPrevVid();
+  if (e.key === 'ArrowRight') videoLightboxNextVid();
+});
+
+/* Lyrics lightbox */
+const lyricsLightbox = document.getElementById('lyricsLightbox');
+const lyricsViewport = document.getElementById('lyricsViewport');
+const lyricsContent = document.getElementById('lyricsContent');
+let lyricsOffset = 0;
+let lyricsMaxOffset = 0;
+let lyricsSpeed = 0;
+let lyricsDragging = false;
+let lyricsDragStartY = 0;
+let lyricsDragStartOffset = 0;
+
+function escapeHtml(str){
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function formatLyricsText(text){
+  let safe = escapeHtml(text);
+  safe = safe.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+  safe = safe.replace(/_([^_]+)_/g, '<em>$1</em>');
+  return safe;
+}
+
+function applyLyricsOffset(){
+  lyricsContent.style.transform = 'translateY(' + (-lyricsOffset) + 'px)';
+}
+
+function openLyrics(text){
+  lyricsContent.innerHTML = formatLyricsText(text);
+  lyricsOffset = 0;
+  applyLyricsOffset();
+  lyricsLightbox.classList.add('visible');
+  requestAnimationFrame(() => {
+    lyricsMaxOffset = Math.max(0, lyricsContent.scrollHeight - lyricsViewport.clientHeight);
+  });
+}
+function closeLyrics(){
+  lyricsLightbox.classList.remove('visible');
+  lyricsContent.innerHTML = '';
+}
+document.getElementById('lyricsLightboxClose').onclick = closeLyrics;
+lyricsLightbox.addEventListener('click', (e) => { if (e.target === lyricsLightbox) closeLyrics(); });
+
+lyricsViewport.addEventListener('pointermove', (e) => {
+  if (e.pointerType === 'touch' || lyricsDragging) return;
+  const rect = lyricsViewport.getBoundingClientRect();
+  const rel = (e.clientY - rect.top) / rect.height;
+  if (rel < 0.15) lyricsSpeed = -380;
+  else if (rel < 0.35) lyricsSpeed = -130;
+  else if (rel > 0.85) lyricsSpeed = 380;
+  else if (rel > 0.65) lyricsSpeed = 130;
+  else lyricsSpeed = 0;
+});
+lyricsViewport.addEventListener('pointerleave', () => { lyricsSpeed = 0; });
+lyricsViewport.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch') return;
+  lyricsDragging = true;
+  lyricsDragStartY = e.clientY;
+  lyricsDragStartOffset = lyricsOffset;
+  lyricsViewport.setPointerCapture(e.pointerId);
+});
+lyricsViewport.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch' || !lyricsDragging) return;
+  const delta = e.clientY - lyricsDragStartY;
+  lyricsOffset = Math.min(lyricsMaxOffset, Math.max(0, lyricsDragStartOffset - delta));
+  applyLyricsOffset();
+});
+function endLyricsDrag(){ lyricsDragging = false; }
+lyricsViewport.addEventListener('pointerup', endLyricsDrag);
+lyricsViewport.addEventListener('pointercancel', endLyricsDrag);
+
+let lyricsLastTime = null;
+function lyricsTick(timestamp){
+  if (lyricsLastTime === null) lyricsLastTime = timestamp;
+  const dt = (timestamp - lyricsLastTime) / 1000;
+  lyricsLastTime = timestamp;
+  if (lyricsLightbox.classList.contains('visible') && !lyricsDragging && lyricsSpeed !== 0){
+    lyricsOffset = Math.min(lyricsMaxOffset, Math.max(0, lyricsOffset + lyricsSpeed * dt));
+    applyLyricsOffset();
+  }
+  requestAnimationFrame(lyricsTick);
+}
+requestAnimationFrame(lyricsTick);
+
+document.addEventListener('keydown', (e) => {
+  if (!lyricsLightbox.classList.contains('visible')) return;
+  if (e.key === 'Escape') closeLyrics();
+});
+
+/* Subtle scroll parallax for the atmosphere layers (the one deliberate JS exception) */
+let atmoTicking = false;
+function updateAtmoParallax(){
+  const sy = Math.min(60, window.scrollY * 0.04);
+  const atmosphere = document.getElementById('atmosphere');
+  if (atmosphere) atmosphere.style.setProperty('--sy', sy + 'px');
+  atmoTicking = false;
+}
+window.addEventListener('scroll', () => {
+  if (!atmoTicking){ requestAnimationFrame(updateAtmoParallax); atmoTicking = true; }
+}, { passive: true });
+
+/* Reel — full chronological timeline across every project */
+const reelSection = document.getElementById('reelSection');
+const reelViewport = document.getElementById('reelViewport');
+const reelTrack = document.getElementById('reelTrack');
+const reelDirectionBtn = document.getElementById('reelDirectionBtn');
+reelDirectionBtn.onclick = () => {
+  state.chronoStep = state.chronoStep === 1 ? -1 : 1;
+  reelDirectionBtn.textContent = state.chronoStep === 1 ? "Rollin' Down" : "Rollin' Up";
+};
+const ROW_H = 34;
+const VISIBLE_ROWS = 5;
+const REEL_PAD = ROW_H * 2;
+let reelEntries = [];
+let reelOffset = 0;
+let reelMaxOffset = 0;
+let reelSpeed = 0;
+let reelDragging = false;
+let reelDragStartY = 0;
+let reelDragStartOffset = 0;
+
+function getAllTracksForItem(item){
+  if (item.multiDisc){
+    let all = [];
+    item.discs.forEach((d) => { all = all.concat(d.tracks); });
+    return all;
+  }
+  return item.tracks || [];
+}
+
+function playChronoFromReel(index){
+  const entry = reelEntries[index];
+  if (!entry || !entry.hasTracks) return;
+  state.project = entry.projKey;
+  state.category = entry.catKey;
+  state.album = entry.item;
+  state.discIndex = 0;
+  state.chronoMode = true;
+  state.chronoIndex = index;
+  state.queue = getAllTracksForItem(entry.item);
+  state.qIndex = 0;
+  state.currentAlbumTitle = entry.projectLabel + ' - ' + entry.title;
+  renderAll();
+  loadAndPlay();
+}
+
+function retreatChrono(){
+  if (!reelEntries.length) return;
+  const step = state.chronoStep || 1;
+  for (let count = 1; count <= reelEntries.length; count++){
+    const idx = ((state.chronoIndex - step * count) % reelEntries.length + reelEntries.length) % reelEntries.length;
+    if (reelEntries[idx].hasTracks){
+      playChronoFromReel(idx);
+      return;
+    }
+  }
+}
+
+function advanceChrono(){
+  if (!reelEntries.length) return;
+  let dir = state.chronoStep || 1;
+  let idx = state.chronoIndex;
+  const maxAttempts = reelEntries.length * 4 + 4;
+  for (let attempts = 0; attempts < maxAttempts; attempts++){
+    idx += dir;
+    if (idx < 0 || idx >= reelEntries.length){
+      dir = -dir;
+      idx = state.chronoIndex;
+      continue;
+    }
+    if (reelEntries[idx].hasTracks){
+      state.chronoStep = dir;
+      reelDirectionBtn.textContent = dir === 1 ? "Rollin' Down" : "Rollin' Up";
+      playChronoFromReel(idx);
+      return;
+    }
+  }
+}
+
+function buildReelEntries(){
+  const entries = [];
+  Object.keys(CATALOG).forEach((projKey) => {
+    const project = CATALOG[projKey];
+    Object.keys(project.categories).forEach((catKey) => {
+      project.categories[catKey].items.forEach((item) => {
+        if (!item.date) return;
+        const hasTracks = (item.tracks && item.tracks.length > 0) ||
+          (item.multiDisc && item.discs && item.discs.some(d => d.tracks.length > 0));
+        entries.push({ date: item.date, title: item.title, projectLabel: project.label, projKey, catKey, item, hasTracks });
+      });
+    });
+  });
+  entries.sort((a, b) => b.date.localeCompare(a.date));
+  return entries;
+}
+
+function renderReel(){
+  reelEntries = buildReelEntries();
+  if (!reelEntries.length){ reelSection.style.display = 'none'; return; }
+  reelSection.style.display = 'block';
+  reelTrack.innerHTML = '';
+  reelEntries.forEach((entry, i) => {
+    const row = document.createElement('div');
+    row.className = 'reel-row';
+    row.innerHTML = '<span class="rd">' + entry.date + '</span><span class="rt">' + entry.projectLabel + ' - ' + entry.title + '</span>';
+    if (entry.hasTracks){
+      row.onclick = () => {
+        playChronoFromReel(i);
+        document.querySelector('header.top').scrollIntoView({ behavior: 'smooth' });
+      };
+    } else {
+      row.style.cursor = 'default';
+    }
+    reelTrack.appendChild(row);
+  });
+  reelTrack.style.paddingTop = REEL_PAD + 'px';
+  reelTrack.style.paddingBottom = REEL_PAD + 'px';
+  reelMaxOffset = Math.max(0, REEL_PAD * 2 + reelEntries.length * ROW_H - VISIBLE_ROWS * ROW_H);
+  reelOffset = 0;
+  updateReelPositions();
+  requestAnimationFrame(() => { reelSection.classList.add('visible'); });
+}
+
+function updateReelPositions(){
+  reelTrack.style.transform = 'translateY(' + (-reelOffset) + 'px)';
+  const centerY = reelOffset + (VISIBLE_ROWS * ROW_H) / 2;
+  const rows = reelTrack.children;
+  for (let i = 0; i < rows.length; i++){
+    const itemCenter = REEL_PAD + i * ROW_H + ROW_H / 2;
+    const dist = Math.abs(itemCenter - centerY);
+    const opacity = Math.max(0, 1 - dist / (ROW_H * 2));
+    rows[i].style.opacity = opacity.toFixed(2);
+  }
+}
+
+reelViewport.addEventListener('pointermove', (e) => {
+  if (e.pointerType === 'touch' || reelDragging) return;
+  const rect = reelViewport.getBoundingClientRect();
+  const relY = e.clientY - rect.top;
+  const zone = Math.min(VISIBLE_ROWS - 1, Math.max(0, Math.floor(relY / ROW_H)));
+  const speeds = [-380, -130, 0, 130, 380];
+  reelSpeed = speeds[zone];
+});
+reelViewport.addEventListener('pointerleave', () => { reelSpeed = 0; });
+
+reelViewport.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch') return;
+  reelDragging = true;
+  reelDragStartY = e.clientY;
+  reelDragStartOffset = reelOffset;
+  reelViewport.setPointerCapture(e.pointerId);
+});
+reelViewport.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch' || !reelDragging) return;
+  const delta = e.clientY - reelDragStartY;
+  reelOffset = Math.min(reelMaxOffset, Math.max(0, reelDragStartOffset - delta));
+  updateReelPositions();
+});
+function endReelDrag(){ reelDragging = false; }
+reelViewport.addEventListener('pointerup', endReelDrag);
+reelViewport.addEventListener('pointercancel', endReelDrag);
+
+let reelLastTime = null;
+function reelTick(timestamp){
+  if (reelLastTime === null) reelLastTime = timestamp;
+  const dt = (timestamp - reelLastTime) / 1000;
+  reelLastTime = timestamp;
+  if (!reelDragging && reelSpeed !== 0 && reelEntries.length){
+    reelOffset = Math.min(reelMaxOffset, Math.max(0, reelOffset + reelSpeed * dt));
+    updateReelPositions();
+  }
+  requestAnimationFrame(reelTick);
+}
+requestAnimationFrame(reelTick);
+
+/* Arranque */
+function buildShareUrl(album){
+  const projLabel = CATALOG[state.project].label;
+  const catLabel = CATALOG[state.project].categories[state.category].label;
+  const url = new URL(location.href);
+  url.search = '';
+  url.searchParams.set('project', projLabel);
+  url.searchParams.set('category', catLabel);
+  url.searchParams.set('date', album.date);
+  return url.toString();
+}
+
+async function shareRelease(album, btnEl){
+  const url = buildShareUrl(album);
+  const shareTitle = (album.multiDisc ? album.discs[state.discIndex].name : album.title) + ' — The Anti™ Radio';
+  if (navigator.share){
+    try { await navigator.share({ title: shareTitle, url }); } catch(e){}
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    const original = btnEl.textContent;
+    btnEl.textContent = 'Copied!';
+    setTimeout(() => { btnEl.textContent = original; }, 1500);
+  } catch(e){}
+}
+
+function findReleaseFromParams(projectLabel, categoryLabel, date){
+  for (const projKey of Object.keys(CATALOG)){
+    if (CATALOG[projKey].label !== projectLabel) continue;
+    const categories = CATALOG[projKey].categories;
+    for (const catKey of Object.keys(categories)){
+      if (categories[catKey].label !== categoryLabel) continue;
+      const item = categories[catKey].items.find(i => i.date === date);
+      if (item) return { projKey, catKey, item };
+    }
+  }
+  return null;
+}
+
+(async () => {
+  if (API_KEY === 'YOUR_KEY_HERE'){
+    main.innerHTML = '<div class="state-msg">API Key not configured yet.<br>Open the code (look for API_KEY) and paste yours in.</div>';
+    return;
+  }
+  try {
+    CATALOG = await getCatalog(false);
+    const params = new URLSearchParams(location.search);
+    const sp = params.get('project');
+    const sc = params.get('category');
+    const sd = params.get('date');
+    const shared = (sp && sc && sd) ? findReleaseFromParams(sp, sc, sd) : null;
+    if (shared){
+      state.project = shared.projKey;
+      state.category = shared.catKey;
+      state.album = shared.item;
+      state.discIndex = 0;
+    } else {
+      state.project = Object.keys(CATALOG)[0];
+      state.category = sortedCategoryKeys(state.project)[0];
+    }
+    renderAll();
+    renderReel();
+  } catch(e){
+    main.innerHTML = '<div class="state-msg">Could not load the catalog.<br>' + e.message + '</div>';
+  }
+})();
+</script>
+</body>
+</html>
