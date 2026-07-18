@@ -24,11 +24,11 @@
   }
   /* Ambient glow beneath each project's line-art layer — deliberately near-monochrome.
      Antelia is the only project allowed a multicolor identity (carried by its rings, not this glow). */
-  .proj-antelia{ --atmo-1:#22102a; --atmo-2:#0e1a24; }
-  .proj-aria{ --atmo-1:#081824; --atmo-2:#0b2230; }
-  .proj-arken{ --atmo-1:#03121a; --atmo-2:#07202c; }
-  .proj-manto{ --atmo-1:#1a140f; --atmo-2:#221b13; }
-  .proj-mauro{ --atmo-1:#131313; --atmo-2:#191919; }
+  .proj-antelia{ --atmo-1:#5c1a5e; --atmo-2:#123a56; }
+  .proj-aria{ --atmo-1:#dbeeff; --atmo-2:#eef6ff; }
+  .proj-arken{ --atmo-1:#054a5e; --atmo-2:#0a6478; }
+  .proj-manto{ --atmo-1:#4a3320; --atmo-2:#5c4326; }
+  .proj-mauro{ --atmo-1:#262626; --atmo-2:#343434; }
   *{ box-sizing:border-box; }
   html,body{ margin:0; padding:0; height:100%; }
   body{
@@ -59,13 +59,13 @@
   }
   .atmosphere::before{
     width:52vw; height:52vw; max-width:600px; max-height:600px; min-width:280px; min-height:280px;
-    top:-14%; left:-12%; background:var(--atmo-1); opacity:.5;
+    top:-14%; left:-12%; background:var(--atmo-1); opacity:.7;
     transform:translateY(var(--sy, 0px));
     animation:atmoDriftA 80s ease-in-out infinite;
   }
   .atmosphere::after{
     width:44vw; height:44vw; max-width:520px; max-height:520px; min-width:240px; min-height:240px;
-    bottom:-14%; right:-10%; background:var(--atmo-2); opacity:.4;
+    bottom:-14%; right:-10%; background:var(--atmo-2); opacity:.6;
     transform:translateY(var(--sy, 0px));
     animation:atmoDriftB 95s ease-in-out infinite;
   }
@@ -82,11 +82,26 @@
   .atmo-layer svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
   .atmo-layer path, .atmo-layer circle, .atmo-layer line, .atmo-layer polygon{ vector-effect:non-scaling-stroke; }
 
-  .atmosphere.proj-antelia .atmo-layer-antelia{ opacity:.62; }
-  .atmosphere.proj-aria    .atmo-layer-aria{ opacity:.58; }
-  .atmosphere.proj-arken   .atmo-layer-arken{ opacity:.5; }
-  .atmosphere.proj-manto   .atmo-layer-manto{ opacity:.42; }
-  .atmosphere.proj-mauro   .atmo-layer-mauro{ opacity:.36; }
+  .atmosphere.proj-antelia .atmo-layer-antelia{ opacity:.7; }
+  .atmosphere.proj-aria    .atmo-layer-aria{ opacity:.68; }
+  .atmosphere.proj-arken   .atmo-layer-arken{ opacity:.6; }
+  .atmosphere.proj-manto   .atmo-layer-manto{ opacity:.5; }
+  .atmosphere.proj-mauro   .atmo-layer-mauro{ opacity:.4; }
+
+  /* Luminous glow — a soft bloom around each layer's strokes so the line art reads
+     as light rather than flat vector outlines. Color-matched per project identity. */
+  .atmo-layer-antelia svg{ filter:drop-shadow(0 0 5px rgba(255,255,255,.22)); }
+  .atmo-layer-aria    svg{ filter:drop-shadow(0 0 5px rgba(220,240,255,.4)); }
+  .atmo-layer-arken   svg{ filter:drop-shadow(0 0 5px rgba(110,225,255,.32)); }
+  .atmo-layer-manto   svg{ filter:drop-shadow(0 0 4px rgba(200,140,80,.28)); }
+  .atmo-layer-mauro   svg{ filter:drop-shadow(0 0 3px rgba(255,255,255,.16)); }
+
+  /* Orbit — Antelia's dispersed nodes drift around their ring's own center at a
+     visibly different pace per ring (inner rings orbit faster), like small bodies
+     in slow, layered motion rather than sitting fixed on a static line. */
+  .atmo-orbit{ will-change:transform; }
+  @keyframes orbitCW{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  @keyframes orbitCCW{ from{ transform:rotate(0deg); } to{ transform:rotate(-360deg); } }
 
   /* Breathing — the one motion every layer shares: near-imperceptible scale,
      transform-origin at center, long duration. Cycle length is the one
@@ -110,16 +125,20 @@
   .atmo-dot-faint{ animation:atmoTwinkleFaint 18s ease-in-out infinite; transform-origin:center; }
   @keyframes atmoTwinkleFaint{ 0%,100%{ opacity:.12; } 50%{ opacity:.4; } }
 
-  /* Line-draw — used for Aria's constellation edges and Manto's diagram connectors.
-     Spends most of the cycle fully drawn and visible (a real constellation should
-     read as connected almost always); the redraw is a slow, occasional event, not
-     a constant flicker. */
+  /* Line-draw — used for Manto's diagram connectors: mostly drawn and visible,
+     with an occasional slow redraw rather than a constant flicker. */
   .atmo-line-draw{ stroke-dasharray:420; stroke-dashoffset:420; animation:atmoDraw 46s ease-in-out infinite; }
   @keyframes atmoDraw{ 0%{ stroke-dashoffset:420; opacity:0; } 6%{ opacity:.6; } 22%{ stroke-dashoffset:0; opacity:.6; } 88%{ stroke-dashoffset:0; opacity:.6; } 97%{ opacity:0; } 100%{ stroke-dashoffset:420; opacity:0; } }
 
+  /* Constellation connections (Aria) — always visibly connected (never fully erases),
+     with a brisk traveling-light shimmer so the connections themselves read as active,
+     not just static geometry. */
+  .atmo-line-shimmer{ stroke-dasharray:5 3; opacity:.55; animation:atmoShimmerFlow 9s linear infinite; }
+  @keyframes atmoShimmerFlow{ 0%{ stroke-dashoffset:0; opacity:.4; } 50%{ opacity:.85; } 100%{ stroke-dashoffset:-64; opacity:.4; } }
+
   /* Currents (Arken) — slow horizontal drift, bathymetric-line feel. */
-  .atmo-current{ animation:atmoCurrent 38s ease-in-out infinite; }
-  @keyframes atmoCurrent{ 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(-1.4%); } }
+  .atmo-current{ animation:atmoCurrent 26s ease-in-out infinite; }
+  @keyframes atmoCurrent{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-3.5%, 1%); } }
 
   /* Technical marks (Manto, Mauro) — a slow opacity breath, nothing sharper. */
   .atmo-mark{ animation:atmoMarkFade 26s ease-in-out infinite; }
@@ -139,7 +158,7 @@
   @media (prefers-reduced-motion: reduce){
     .atmosphere::before, .atmosphere::after,
     .atmo-antelia-breathe, .atmo-aria-breathe, .atmo-arken-breathe, .atmo-manto-breathe, .atmo-mauro-breathe,
-    .atmo-dot, .atmo-dot-faint, .atmo-line-draw, .atmo-current, .atmo-mark{ animation:none !important; }
+    .atmo-dot, .atmo-dot-faint, .atmo-line-draw, .atmo-line-shimmer, .atmo-current, .atmo-mark, .atmo-orbit{ animation:none !important; }
   }
 
   header.top{
@@ -302,71 +321,99 @@
         <circle cx="520" cy="520" r="185" fill="none" stroke="#3bc8ff" stroke-width="0.6" opacity="0.7"/>
         <circle cx="490" cy="480" r="125" fill="none" stroke="#6a5cff" stroke-width="0.6" opacity="0.75"/>
         <circle cx="460" cy="440" r="70" fill="none" stroke="#b23bff" stroke-width="0.65" opacity="0.8"/>
-        <!-- orbit markers — small hollow "planets", each colored to match the ring it sits on -->
-        <circle class="atmo-dot" cx="208" cy="503" r="3.2" fill="none" stroke="#ff2f7a" stroke-width="0.55" opacity="0.85" style="animation-delay:0s"/>
-        <circle class="atmo-dot" cx="560" cy="207" r="3.2" fill="none" stroke="#ff2f7a" stroke-width="0.55" opacity="0.85" style="animation-delay:2s"/>
-        <circle class="atmo-dot" cx="272" cy="825" r="3.2" fill="none" stroke="#ff8a3b" stroke-width="0.55" opacity="0.85" style="animation-delay:4s"/>
-        <circle class="atmo-dot" cx="477" cy="264" r="3.2" fill="none" stroke="#ff8a3b" stroke-width="0.55" opacity="0.85" style="animation-delay:1s"/>
-        <circle class="atmo-dot" cx="857" cy="760" r="3.2" fill="none" stroke="#ffd93b" stroke-width="0.55" opacity="0.85" style="animation-delay:6s"/>
-        <circle class="atmo-dot" cx="265" cy="544" r="3.2" fill="none" stroke="#ffd93b" stroke-width="0.55" opacity="0.85" style="animation-delay:3s"/>
-        <circle class="atmo-dot" cx="507" cy="806" r="2.6" fill="none" stroke="#3bd67a" stroke-width="0.55" opacity="0.85" style="animation-delay:5s"/>
-        <circle class="atmo-dot" cx="675" cy="343" r="2.6" fill="none" stroke="#3bd67a" stroke-width="0.55" opacity="0.85" style="animation-delay:8s"/>
-        <circle class="atmo-dot" cx="694" cy="457" r="2.6" fill="none" stroke="#3bc8ff" stroke-width="0.55" opacity="0.85" style="animation-delay:2.5s"/>
-        <circle class="atmo-dot" cx="552" cy="702" r="2.6" fill="none" stroke="#3bc8ff" stroke-width="0.55" opacity="0.85" style="animation-delay:7s"/>
-        <circle class="atmo-dot" cx="373" cy="437" r="2.6" fill="none" stroke="#6a5cff" stroke-width="0.55" opacity="0.85" style="animation-delay:9.5s"/>
-        <circle class="atmo-dot" cx="607" cy="523" r="2.6" fill="none" stroke="#6a5cff" stroke-width="0.55" opacity="0.85" style="animation-delay:1.5s"/>
-        <circle class="atmo-dot" cx="425" cy="501" r="2.6" fill="none" stroke="#b23bff" stroke-width="0.55" opacity="0.85" style="animation-delay:4.5s"/>
-        <circle class="atmo-dot" cx="495" cy="379" r="2.6" fill="none" stroke="#b23bff" stroke-width="0.55" opacity="0.85" style="animation-delay:10s"/>
+        <!-- orbit nodes — one "planet" per ring, each genuinely revolving around that
+             ring's own center at a distinct, visibly-different speed (not a static dot). -->
+        <g class="atmo-orbit" style="transform-origin:460px 440px; animation:orbitCW 16s linear infinite;">
+          <circle cx="406.4" cy="485" r="4" fill="none" stroke="#b23bff" stroke-width="0.6" opacity="0.9"/>
+        </g>
+        <g class="atmo-orbit" style="transform-origin:490px 480px; animation:orbitCCW 22s linear infinite;">
+          <circle cx="570.3" cy="384.2" r="3.8" fill="none" stroke="#6a5cff" stroke-width="0.6" opacity="0.88"/>
+        </g>
+        <g class="atmo-orbit" style="transform-origin:520px 520px; animation:orbitCW 30s linear infinite;">
+          <circle cx="536.1" cy="704.3" r="3.6" fill="none" stroke="#3bc8ff" stroke-width="0.55" opacity="0.86"/>
+        </g>
+        <g class="atmo-orbit" style="transform-origin:550px 560px; animation:orbitCCW 40s linear infinite;">
+          <circle cx="373.2" cy="383.2" r="3.4" fill="none" stroke="#3bd67a" stroke-width="0.55" opacity="0.84"/>
+        </g>
+        <g class="atmo-orbit" style="transform-origin:580px 600px; animation:orbitCW 52s linear infinite;">
+          <circle cx="279.3" cy="709.4" r="3.4" fill="none" stroke="#ffd93b" stroke-width="0.55" opacity="0.82"/>
+        </g>
+        <g class="atmo-orbit" style="transform-origin:610px 630px; animation:orbitCCW 66s linear infinite;">
+          <circle cx="860.7" cy="928.8" r="3.2" fill="none" stroke="#ff8a3b" stroke-width="0.5" opacity="0.8"/>
+        </g>
+        <g class="atmo-orbit" style="transform-origin:640px 660px; animation:orbitCW 82s linear infinite;">
+          <circle cx="870" cy="261.6" r="3.2" fill="none" stroke="#ff2f7a" stroke-width="0.5" opacity="0.8"/>
+        </g>
       </g>
     </svg>
   </div>
 
-  <!-- ARIA · 12 · Sky / Constellations / Cycles — ice blue, lines are the protagonist -->
+  <!-- ARIA · 12 · Sky / Constellations / Cycles — luminous white, lines are the protagonist -->
   <div class="atmo-layer atmo-layer-aria">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-aria-breathe">
-        <path class="atmo-line-draw" d="M620,90 L730,230" fill="none" stroke="#bfe3f7" stroke-width="0.55" style="animation-delay:-1s"/>
-        <path class="atmo-line-draw" d="M730,230 L560,300" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-5s"/>
-        <path class="atmo-line-draw" d="M560,300 L430,170" fill="none" stroke="#9fc9e8" stroke-width="0.5" style="animation-delay:-9s"/>
-        <path class="atmo-line-draw" d="M430,170 L280,340" fill="none" stroke="#9fc9e8" stroke-width="0.45" style="animation-delay:-13s"/>
-        <path class="atmo-line-draw" d="M280,340 L380,460" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-17s"/>
-        <path class="atmo-line-draw" d="M380,460 L540,410" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-21s"/>
-        <path class="atmo-line-draw" d="M540,410 L560,300" fill="none" stroke="#9fc9e8" stroke-width="0.4" style="animation-delay:-25s"/>
-        <path class="atmo-line-draw" d="M540,410 L690,500" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-3s"/>
-        <path class="atmo-line-draw" d="M690,500 L830,450" fill="none" stroke="#9fc9e8" stroke-width="0.45" style="animation-delay:-11s"/>
-        <path class="atmo-line-draw" d="M690,500 L730,650" fill="none" stroke="#bfe3f7" stroke-width="0.5" style="animation-delay:-19s"/>
-        <path class="atmo-line-draw" d="M730,650 L560,720" fill="none" stroke="#9fc9e8" stroke-width="0.45" style="animation-delay:-27s"/>
-        <path class="atmo-line-draw" d="M560,720 L410,620" fill="none" stroke="#bfe3f7" stroke-width="0.4" style="animation-delay:-7s"/>
+        <path class="atmo-line-shimmer" d="M620,90 L730,230" fill="none" stroke="#ffffff" stroke-width="0.7" style="animation-delay:-1s"/>
+        <path class="atmo-line-shimmer" d="M730,230 L560,300" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-4s"/>
+        <path class="atmo-line-shimmer" d="M560,300 L430,170" fill="none" stroke="#eaf6ff" stroke-width="0.65" style="animation-delay:-7s"/>
+        <path class="atmo-line-shimmer" d="M430,170 L280,340" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-10s"/>
+        <path class="atmo-line-shimmer" d="M280,340 L200,540" fill="none" stroke="#ffffff" stroke-width="0.6" style="animation-delay:-13s"/>
+        <path class="atmo-line-shimmer" d="M380,460 L540,410" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-16s"/>
+        <path class="atmo-line-shimmer" d="M540,410 L560,300" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-19s"/>
+        <path class="atmo-line-shimmer" d="M540,410 L690,500" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-2s"/>
+        <path class="atmo-line-shimmer" d="M690,500 L830,450" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-8s"/>
+        <path class="atmo-line-shimmer" d="M690,500 L730,650" fill="none" stroke="#ffffff" stroke-width="0.6" style="animation-delay:-14s"/>
+        <path class="atmo-line-shimmer" d="M730,650 L560,720" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-20s"/>
+        <path class="atmo-line-shimmer" d="M560,720 L410,620" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:-5s"/>
+        <path class="atmo-line-shimmer" d="M380,460 L280,340" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-11s"/>
+        <path class="atmo-line-shimmer" d="M410,620 L200,540" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:-17s"/>
+        <path class="atmo-line-shimmer" d="M120,760 L280,340" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-6s"/>
+        <path class="atmo-line-shimmer" d="M120,760 L200,540" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-12s"/>
+        <path class="atmo-line-shimmer" d="M850,760 L730,650" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-18s"/>
+        <path class="atmo-line-shimmer" d="M850,760 L830,450" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-3s"/>
+        <path class="atmo-line-shimmer" d="M900,270 L730,230" fill="none" stroke="#dceeff" stroke-width="0.45" opacity="0.75" style="animation-delay:-9s"/>
 
-        <!-- secondary web — extra connections so the constellation reads denser, not just one zigzag chain -->
-        <path class="atmo-line-draw" d="M560,300 L690,500" fill="none" stroke="#7fb8dc" stroke-width="0.35" opacity="0.8" style="animation-delay:-15s"/>
-        <path class="atmo-line-draw" d="M280,340 L410,620" fill="none" stroke="#7fb8dc" stroke-width="0.35" opacity="0.8" style="animation-delay:-33s"/>
-        <path class="atmo-line-draw" d="M830,450 L730,650" fill="none" stroke="#7fb8dc" stroke-width="0.35" opacity="0.8" style="animation-delay:-23s"/>
-        <path class="atmo-line-draw" d="M620,90 L430,170" fill="none" stroke="#7fb8dc" stroke-width="0.35" opacity="0.8" style="animation-delay:-38s"/>
-        <path class="atmo-line-draw" d="M380,460 L560,720" fill="none" stroke="#7fb8dc" stroke-width="0.3" opacity="0.7" style="animation-delay:-29s"/>
+        <!-- secondary web — extra connections so the constellation reads as a random, denser sky -->
+        <path class="atmo-line-shimmer" d="M560,300 L690,500" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-15s"/>
+        <path class="atmo-line-shimmer" d="M280,340 L410,620" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-21s"/>
+        <path class="atmo-line-shimmer" d="M830,450 L730,650" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-6.5s"/>
+        <path class="atmo-line-shimmer" d="M620,90 L430,170" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-23s"/>
+        <path class="atmo-line-shimmer" d="M380,460 L560,720" fill="none" stroke="#bcdcf2" stroke-width="0.35" opacity="0.6" style="animation-delay:-9.5s"/>
 
-        <!-- stars — hollow circumferences, not filled dots -->
-        <circle class="atmo-dot" cx="620" cy="90"  r="3.4" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:0s"/>
-        <circle class="atmo-dot" cx="730" cy="230" r="3"   fill="none" stroke="#cfeaff" stroke-width="0.5" style="animation-delay:1.5s"/>
-        <circle class="atmo-dot" cx="560" cy="300" r="3.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:3s"/>
-        <circle class="atmo-dot" cx="430" cy="170" r="2.8" fill="none" stroke="#cfeaff" stroke-width="0.5" style="animation-delay:4.5s"/>
-        <circle class="atmo-dot" cx="280" cy="340" r="3"   fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:6s"/>
-        <circle class="atmo-dot" cx="380" cy="460" r="2.6" fill="none" stroke="#cfeaff" stroke-width="0.5" style="animation-delay:7.5s"/>
-        <circle class="atmo-dot" cx="540" cy="410" r="3.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:9s"/>
-        <circle class="atmo-dot" cx="690" cy="500" r="2.8" fill="none" stroke="#cfeaff" stroke-width="0.5" style="animation-delay:10.5s"/>
-        <circle class="atmo-dot" cx="830" cy="450" r="3"   fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:12s"/>
-        <circle class="atmo-dot" cx="730" cy="650" r="2.8" fill="none" stroke="#cfeaff" stroke-width="0.5" style="animation-delay:13.5s"/>
-        <circle class="atmo-dot" cx="560" cy="720" r="3.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:2s"/>
-        <circle class="atmo-dot" cx="410" cy="620" r="2.6" fill="none" stroke="#cfeaff" stroke-width="0.5" style="animation-delay:8s"/>
+        <!-- stars — hollow circumferences, the notable points of each constellation -->
+        <circle class="atmo-dot" cx="620" cy="90"  r="2.6" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:0s"/>
+        <circle class="atmo-dot" cx="730" cy="230" r="2.3" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:1.5s"/>
+        <circle class="atmo-dot" cx="560" cy="300" r="2.5" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:3s"/>
+        <circle class="atmo-dot" cx="430" cy="170" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:4.5s"/>
+        <circle class="atmo-dot" cx="280" cy="340" r="2.4" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:6s"/>
+        <circle class="atmo-dot" cx="380" cy="460" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:7.5s"/>
+        <circle class="atmo-dot" cx="540" cy="410" r="2.5" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:9s"/>
+        <circle class="atmo-dot" cx="690" cy="500" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:10.5s"/>
+        <circle class="atmo-dot" cx="830" cy="450" r="2.4" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:12s"/>
+        <circle class="atmo-dot" cx="730" cy="650" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:13.5s"/>
+        <circle class="atmo-dot" cx="560" cy="720" r="2.5" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:2s"/>
+        <circle class="atmo-dot" cx="410" cy="620" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:8s"/>
+        <circle class="atmo-dot" cx="200" cy="540" r="2"   fill="none" stroke="#eaf6ff" stroke-width="0.45" style="animation-delay:5s"/>
+        <circle class="atmo-dot" cx="120" cy="760" r="1.9" fill="none" stroke="#dceeff" stroke-width="0.45" style="animation-delay:11s"/>
+        <circle class="atmo-dot" cx="850" cy="760" r="1.9" fill="none" stroke="#dceeff" stroke-width="0.45" style="animation-delay:2.5s"/>
+        <circle class="atmo-dot" cx="900" cy="270" r="1.8" fill="none" stroke="#dceeff" stroke-width="0.4" style="animation-delay:6.5s"/>
 
-        <circle class="atmo-dot-faint" cx="150" cy="120" r="1.2" fill="#dff0ff" style="animation-delay:1s"/>
-        <circle class="atmo-dot-faint" cx="900" cy="150" r="1"   fill="#dff0ff" style="animation-delay:3s"/>
-        <circle class="atmo-dot-faint" cx="120" cy="560" r="1.3" fill="#dff0ff" style="animation-delay:5s"/>
-        <circle class="atmo-dot-faint" cx="900" cy="720" r="1"   fill="#dff0ff" style="animation-delay:7s"/>
-        <circle class="atmo-dot-faint" cx="220" cy="850" r="1.2" fill="#dff0ff" style="animation-delay:9s"/>
-        <circle class="atmo-dot-faint" cx="800" cy="880" r="1"   fill="#dff0ff" style="animation-delay:11s"/>
-        <circle class="atmo-dot-faint" cx="60"  cy="330" r="1.1" fill="#dff0ff" style="animation-delay:13s"/>
-        <circle class="atmo-dot-faint" cx="950" cy="380" r="1"   fill="#dff0ff" style="animation-delay:15s"/>
+        <!-- dense field of small solid stars — more points of light, less empty sky -->
+        <circle class="atmo-dot-faint" cx="150" cy="120" r="1.3" fill="#ffffff" style="animation-delay:1s"/>
+        <circle class="atmo-dot-faint" cx="900" cy="150" r="1.1" fill="#ffffff" style="animation-delay:3s"/>
+        <circle class="atmo-dot-faint" cx="120" cy="560" r="1.4" fill="#ffffff" style="animation-delay:5s"/>
+        <circle class="atmo-dot-faint" cx="960" cy="620" r="1.1" fill="#ffffff" style="animation-delay:7s"/>
+        <circle class="atmo-dot-faint" cx="220" cy="850" r="1.3" fill="#ffffff" style="animation-delay:9s"/>
+        <circle class="atmo-dot-faint" cx="800" cy="880" r="1.1" fill="#ffffff" style="animation-delay:11s"/>
+        <circle class="atmo-dot-faint" cx="60"  cy="330" r="1.2" fill="#ffffff" style="animation-delay:13s"/>
+        <circle class="atmo-dot-faint" cx="950" cy="380" r="1.1" fill="#ffffff" style="animation-delay:15s"/>
+        <circle class="atmo-dot-faint" cx="40"  cy="900" r="1.2" fill="#ffffff" style="animation-delay:2s"/>
+        <circle class="atmo-dot-faint" cx="480" cy="40"  r="1"   fill="#ffffff" style="animation-delay:4s"/>
+        <circle class="atmo-dot-faint" cx="330" cy="960" r="1.2" fill="#ffffff" style="animation-delay:6s"/>
+        <circle class="atmo-dot-faint" cx="960" cy="880" r="1"   fill="#ffffff" style="animation-delay:8s"/>
+        <circle class="atmo-dot-faint" cx="670" cy="60"  r="1.1" fill="#ffffff" style="animation-delay:10s"/>
+        <circle class="atmo-dot-faint" cx="40"  cy="230" r="1"   fill="#ffffff" style="animation-delay:12s"/>
+        <circle class="atmo-dot-faint" cx="510" cy="890" r="1.2" fill="#ffffff" style="animation-delay:14s"/>
+        <circle class="atmo-dot-faint" cx="720" cy="880" r="1"   fill="#ffffff" style="animation-delay:16s"/>
       </g>
     </svg>
   </div>
@@ -376,11 +423,11 @@
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-arken-breathe">
         <!-- 5 main currents — multi-hump so they read as moving water, not static bands -->
-        <path class="atmo-current" d="M-40,130 Q140,80 320,135 Q500,190 680,120 Q860,60 1040,125" fill="none" stroke="#6fcfe6" stroke-width="0.6" opacity="0.65" style="animation-delay:0s; animation-duration:32s"/>
-        <path class="atmo-current" d="M-40,235 Q160,175 340,240 Q520,305 700,225 Q880,155 1040,230" fill="none" stroke="#4fb8cf" stroke-width="0.6" opacity="0.6" style="animation-delay:-7s; animation-duration:35s"/>
-        <path class="atmo-current" d="M-40,385 Q180,320 380,390 Q580,460 780,375 Q900,325 1040,380" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-14s; animation-duration:38s; animation-direction:reverse"/>
-        <path class="atmo-current" d="M-40,590 Q200,520 420,600 Q640,680 840,585 Q940,545 1040,590" fill="none" stroke="#1e6f85" stroke-width="0.55" opacity="0.48" style="animation-delay:-21s; animation-duration:41s"/>
-        <path class="atmo-current" d="M-40,830 Q220,770 440,835 Q660,900 860,820 Q950,785 1040,825" fill="none" stroke="#123f4c" stroke-width="0.5" opacity="0.4" style="animation-delay:-28s; animation-duration:37s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-40,130 Q140,80 320,135 Q500,190 680,120 Q860,60 1040,125" fill="none" stroke="#6fcfe6" stroke-width="0.6" opacity="0.65" style="animation-delay:0s; animation-duration:24s"/>
+        <path class="atmo-current" d="M-40,235 Q160,175 340,240 Q520,305 700,225 Q880,155 1040,230" fill="none" stroke="#4fb8cf" stroke-width="0.6" opacity="0.6" style="animation-delay:-7s; animation-duration:26s"/>
+        <path class="atmo-current" d="M-40,385 Q180,320 380,390 Q580,460 780,375 Q900,325 1040,380" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-14s; animation-duration:28s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-40,590 Q200,520 420,600 Q640,680 840,585 Q940,545 1040,590" fill="none" stroke="#2e93b5" stroke-width="0.55" opacity="0.5" style="animation-delay:-21s; animation-duration:29s"/>
+        <path class="atmo-current" d="M-40,830 Q220,770 440,835 Q660,900 860,820 Q950,785 1040,825" fill="none" stroke="#1f6f8c" stroke-width="0.5" opacity="0.44" style="animation-delay:-28s; animation-duration:27s; animation-direction:reverse"/>
 
         <!-- secondary depth-contour lines — thin dashed isobars threading between the main currents -->
         <path class="atmo-current" d="M-40,180 Q220,140 460,185 Q700,230 1040,175" fill="none" stroke="#4fb8cf" stroke-width="0.35" stroke-dasharray="2 7" opacity="0.3" style="animation-delay:-4s; animation-duration:44s"/>
@@ -413,37 +460,42 @@
   <div class="atmo-layer atmo-layer-manto">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-manto-breathe">
+        <!-- faint connectors — thread the four clusters into one notebook page -->
+        <path d="M395,375 Q470,430 460,455" fill="none" stroke="#8a7358" stroke-width="0.35" opacity="0.3"/>
+        <path d="M560,410 Q580,470 600,490" fill="none" stroke="#8a7358" stroke-width="0.35" opacity="0.3"/>
+        <path d="M480,555 Q520,560 560,555" fill="none" stroke="#8a7358" stroke-width="0.35" opacity="0.3"/>
+
         <!-- cluster A: axis + circle -->
         <g class="atmo-mark" style="animation-delay:-2s">
-          <line x1="120" y1="220" x2="330" y2="220" stroke="#9aa3ab" stroke-width="0.5"/>
-          <line x1="220" y1="130" x2="220" y2="320" stroke="#9aa3ab" stroke-width="0.5"/>
-          <circle cx="220" cy="220" r="42" fill="none" stroke="#c9a98c" stroke-width="0.5"/>
-          <circle cx="220" cy="220" r="3" fill="none" stroke="#c9a98c" stroke-width="0.5"/>
-          <line x1="150" y1="150" x2="165" y2="150" stroke="#9aa3ab" stroke-width="0.4"/>
-          <line x1="150" y1="150" x2="150" y2="165" stroke="#9aa3ab" stroke-width="0.4"/>
+          <line x1="330" y1="360" x2="470" y2="360" stroke="#9a8265" stroke-width="0.5"/>
+          <line x1="400" y1="290" x2="400" y2="430" stroke="#9a8265" stroke-width="0.5"/>
+          <circle cx="400" cy="360" r="34" fill="none" stroke="#c1703f" stroke-width="0.5"/>
+          <circle cx="400" cy="360" r="2.6" fill="none" stroke="#c1703f" stroke-width="0.5"/>
+          <line x1="352" y1="316" x2="364" y2="316" stroke="#9a8265" stroke-width="0.4"/>
+          <line x1="352" y1="316" x2="352" y2="328" stroke="#9a8265" stroke-width="0.4"/>
         </g>
         <!-- cluster B: radius / clock + arc -->
         <g class="atmo-mark" style="animation-delay:-9s">
-          <circle cx="770" cy="260" r="58" fill="none" stroke="#8a95a0" stroke-width="0.5"/>
-          <line x1="770" y1="260" x2="770" y2="204" stroke="#8a95a0" stroke-width="0.45"/>
-          <line x1="770" y1="260" x2="812" y2="288" stroke="#8a95a0" stroke-width="0.4"/>
-          <path d="M700,340 Q740,375 800,360" fill="none" stroke="#c9a98c" stroke-width="0.45"/>
-          <circle cx="770" cy="260" r="2.4" fill="#c9a98c"/>
+          <circle cx="610" cy="390" r="46" fill="none" stroke="#8a7358" stroke-width="0.5"/>
+          <line x1="610" y1="390" x2="610" y2="348" stroke="#8a7358" stroke-width="0.45"/>
+          <line x1="610" y1="390" x2="642" y2="412" stroke="#8a7358" stroke-width="0.4"/>
+          <path d="M558,452 Q590,478 636,466" fill="none" stroke="#c1703f" stroke-width="0.45"/>
+          <circle cx="610" cy="390" r="2.2" fill="#c1703f"/>
         </g>
         <!-- cluster C: curve + guide -->
         <g class="atmo-mark" style="animation-delay:-16s">
-          <path class="atmo-line-draw" d="M180,760 Q260,700 320,750 Q380,800 440,745" fill="none" stroke="#c9a98c" stroke-width="0.5" style="animation-delay:-10s"/>
-          <line x1="180" y1="680" x2="180" y2="840" stroke="#8a95a0" stroke-width="0.4"/>
-          <circle cx="320" cy="750" r="2.6" fill="#8a95a0"/>
+          <path class="atmo-line-draw" d="M360,560 Q415,515 460,553 Q505,590 550,548" fill="none" stroke="#c1703f" stroke-width="0.5" style="animation-delay:-10s"/>
+          <line x1="360" y1="500" x2="360" y2="620" stroke="#8a7358" stroke-width="0.4"/>
+          <circle cx="460" cy="553" r="2.4" fill="#8a7358"/>
         </g>
         <!-- cluster D: molecule / node graph -->
         <g class="atmo-mark" style="animation-delay:-22s">
-          <path d="M760,690 L820,660 L880,690 L880,750 L820,780 L760,750 Z" fill="none" stroke="#8a95a0" stroke-width="0.45"/>
-          <circle cx="760" cy="690" r="2.2" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
-          <circle cx="880" cy="750" r="2.2" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
-          <circle cx="820" cy="660" r="2.2" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
-          <line x1="820" y1="660" x2="820" y2="600" stroke="#8a95a0" stroke-width="0.4"/>
-          <circle cx="820" cy="600" r="2.4" fill="none" stroke="#c9a98c" stroke-width="0.4"/>
+          <path d="M580,580 L628,556 L676,580 L676,628 L628,652 L580,628 Z" fill="none" stroke="#8a7358" stroke-width="0.45"/>
+          <circle cx="580" cy="580" r="2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
+          <circle cx="676" cy="628" r="2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
+          <circle cx="628" cy="556" r="2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
+          <line x1="628" y1="556" x2="628" y2="508" stroke="#8a7358" stroke-width="0.4"/>
+          <circle cx="628" cy="508" r="2.2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
         </g>
       </g>
     </svg>
