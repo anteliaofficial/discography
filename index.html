@@ -72,6 +72,13 @@
   @keyframes atmoDriftA{ 0%,100%{ transform:translate(0, var(--sy,0px)) scale(1); } 50%{ transform:translate(2%, calc(var(--sy,0px) - 1.2%)) scale(1.04); } }
   @keyframes atmoDriftB{ 0%,100%{ transform:translate(0, var(--sy,0px)) scale(1); } 50%{ transform:translate(-1.6%, calc(var(--sy,0px) + 1.6%)) scale(0.97); } }
 
+  /* Aria's glow is near-white by design (stellar nebula), which reads too strong
+     at the shared .7/.6 opacity — it starts competing with white UI text sitting
+     on top of it. Dialed back for this project only; every other project keeps
+     the shared opacity above. */
+  .atmosphere.proj-aria::before{ opacity:.32; }
+  .atmosphere.proj-aria::after{ opacity:.26; }
+
   /* Shared line-art layer. Screen blend lets thin strokes glow faintly against
      the near-black background instead of sitting flat on top of it. */
   .atmo-layer{
@@ -133,8 +140,8 @@
   /* Constellation connections (Aria) — always visibly connected (never fully erases),
      with a brisk traveling-light shimmer so the connections themselves read as active,
      not just static geometry. */
-  .atmo-line-shimmer{ stroke-dasharray:5 3; opacity:.55; animation:atmoShimmerFlow 9s linear infinite; }
-  @keyframes atmoShimmerFlow{ 0%{ stroke-dashoffset:0; opacity:.4; } 50%{ opacity:.85; } 100%{ stroke-dashoffset:-64; opacity:.4; } }
+  .atmo-line-shimmer{ stroke-dasharray:none; opacity:.5; animation:atmoLineBreathe 12s ease-in-out infinite; }
+  @keyframes atmoLineBreathe{ 0%,100%{ opacity:.4; } 50%{ opacity:.58; } }
 
   /* Currents (Arken) — slow horizontal drift, bathymetric-line feel. */
   .atmo-current{ animation:atmoCurrent 26s ease-in-out infinite; }
