@@ -21,7 +21,8 @@ Covers five projects: **Antelia, ARIA, Arken, Manto, Mauro Fuentes.**
 
 - `index.html` — the entire app. HTML + CSS + JS in one file, no imports, no
   build step, no npm. This is intentional — it needs to be droppable straight
-  onto GitHub Pages with zero tooling.
+  onto GitHub Pages with zero tooling. Includes the **Atmosphere** background
+  system (per-project ambient identity) — see its own section below.
 - `sw.js` — service worker, caches the app shell for PWA installability.
   **Bump the `CACHE` version string every time you edit `index.html` or `sw.js`
   itself**, or returning visitors get stuck on a stale cached version. This has
@@ -69,6 +70,7 @@ Read top to bottom, this is roughly the order things appear in `index.html`:
 | Media Session (lock screen) | `updateMediaSession()`, the `if ('mediaSession' in navigator)` block |
 | Shareable release links | `buildShareUrl()`, `shareRelease()`, `findReleaseFromParams()` |
 | Full timeline reel | `buildReelEntries()`, `renderReel()`, hover/drag physics, `playChronoFromReel()`, `advanceChrono()`, `retreatChrono()` |
+| Atmosphere (background identity) | `applyProjectAtmosphere()`, `PROJECT_BG_CLASS` — see dedicated section below |
 
 ---
 
@@ -93,6 +95,116 @@ was started from the reel ("Spin the Cylinder"), and it changes what happens
 when a queue runs out — normal playback loops the same release forever;
 chrono mode advances to the next release in the full timeline instead (see
 "Known limits" for the one real gap here).
+
+---
+
+## Atmosphere — the per-project background identity system
+
+**What it is:** a purely visual, purely CSS+SVG layer that gives each of the
+five projects its own ambient background, entirely decoupled from data,
+playback, and rendering logic. It lives inside `index.html` only (no separate
+file) — the `<style>` block (search for `Atmosphere —`) and the
+`<div id="atmosphere">` markup right after `<body>`.
+
+**How it's wired to the rest of the app (and why you almost never need to
+touch JS for this):** `applyProjectAtmosphere()` is the *only* JS function
+that touches Atmosphere, and all it does is swap one class on `#atmosphere`:
+
+```js
+const PROJECT_BG_CLASS = { 'Antelia': 'proj-antelia', 'ARIA': 'proj-aria', 'Arken': 'proj-arken', 'Manto': 'proj-manto', 'Mauro Fuentes': 'proj-mauro' };
+```
+
+Every visual difference between projects — glow color, which SVG layer is
+visible, line color, animation timing — is driven purely by CSS selectors
+scoped under `.atmosphere.proj-X`. If you're adding a sixth project, the JS
+change is one new entry in `PROJECT_BG_CLASS`; the visual work is 100% CSS/SVG.
+
+There's one small deliberate exception, unrelated to per-project switching:
+a scroll-parallax effect (search `--sy`) reads scroll position and nudges the
+ambient glow blobs via a CSS custom property. That's the one place JS reaches
+into Atmosphere's styling, and it's project-agnostic.
+
+### Structure
+
+Two layers stack inside `#atmosphere` (`z-index:0`, fixed, behind the whole
+`.app`, `pointer-events:none` throughout so it never intercepts taps):
+
+1. **Ambient glow** (`.atmosphere::before` / `::after`) — two large, heavily
+   blurred, softly drifting circles using `--atmo-1` / `--atmo-2`. These are
+   CSS custom properties overridden per project (`.proj-antelia{ --atmo-1:...}`
+   etc.) so the same two pseudo-elements repaint themselves on class swap —
+   no separate glow markup per project. Deliberately near-monochrome for every
+   project **except Antelia**, which is the one identity allowed to be
+   multicolor (its rings carry the color; the glow underneath stays a dim
+   magenta/purple wash so it doesn't fight the rings).
+2. **Line-art layer** (`.atmo-layer`) — five `<div class="atmo-layer atmo-layer-X">`
+   blocks, one per project, each wrapping one inline SVG (`viewBox="0 0 1000 1000"`,
+   `preserveAspectRatio="xMidYMid slice"` so the composition crops gracefully
+   at any aspect ratio instead of stretching). All five are always in the DOM;
+   only the active one is visible — controlled entirely by opacity:
+
+   ```css
+   .atmosphere.proj-antelia .atmo-layer-antelia{ opacity:.62; }
+   .atmosphere.proj-aria    .atmo-layer-aria{ opacity:.58; }
+   /* ...one rule per project */
+   ```
+
+   This is why switching projects fades smoothly (`.atmo-layer` has
+   `transition:opacity 1.6s ease`) instead of hard-cutting — all five SVGs are
+   always rendered, just invisible.
+
+### The shared visual grammar
+
+Every project's line art follows the same rules, so a designer can tell they're
+the same system even with color removed — only geometry, color, and symbolism
+change per project:
+
+- Stroke width ~0.5–0.7px, `fill:none` (no filled shapes, no illustrations).
+- `vector-effect="non-scaling-stroke"` on every stroked element, so lines stay
+  crisp and equally thin regardless of how the SVG is scaled to fill different
+  screen sizes — added as a robustness fix over the previous version, which
+  didn't have this and could get uneven stroke weight on stretch.
+- `mix-blend-mode:screen` on `.atmo-layer` — lets the thin strokes glow subtly
+  against the near-black background instead of sitting flat on top of it.
+- One shared "breathing" keyframe family (`atmoBreathe21` / `24` / `25` / `28`
+  / `30`) — a near-imperceptible scale pulse (≤1.8%), transform-origin at
+  canvas center. The duration is the *one* place each project is allowed to
+  diverge in pace, and it's tied to that project's symbolic number (Antelia 7
+  → 21s, Aria 12 → 24s, Arken 5 → 25s, Manto 4 → 28s, Mauro Fuentes 1 → 30s —
+  slower for the more minimal/sober identities).
+- No fast motion anywhere. Movement is limited to: opacity breathing
+  (`.atmo-mark`, `.atmo-dot`), `stroke-dashoffset` reveal/hide loops
+  (`.atmo-line-draw`), and small horizontal drift (`.atmo-current`,
+  Arken only). Nothing rotates quickly, nothing scales more than ~2%.
+- `@media (prefers-reduced-motion: reduce)` kills every Atmosphere animation
+  — this was already true before and is preserved.
+
+### Per-project identity
+
+| Project | Symbolic number | Concept | Color | Geometry |
+|---|---|---|---|---|
+| **Antelia** | 7 | Resonance, spectrum, light | Full rainbow (only multicolor layer) | 7 offset rings, radius decreasing, one hue per ring |
+| **Aria** | 12 | The sky, constellations (not galaxies/nebulae/planets) | Ice blue | 12 stars + 12 connecting edges, plus faint unconnected background stars |
+| **Arken** | 5 | Deep ocean, bathymetric charts, currents (not waves/water literally) | Dark petroleum blue | 5 horizontal current lines, vertical spacing loosely following φ (golden ratio) |
+| **Manto** | 4 | Creative laboratory / research notebook (not alchemy/esoterica) | Warm gray / tan | 4 diagram clusters: axis+circle, radius+arc, curve+guide line, node graph |
+| **Mauro Fuentes** | 1 | The author, the origin, sobriety — an architectural plan | Neutral gray | Single central crosshair axis + minimal tick marks. The most minimal of all five, intentionally |
+
+### Editing or adding to Atmosphere
+
+- **To restyle one project:** find its `.atmo-layer-X` block in the HTML and
+  its `--atmo-1`/`--atmo-2` override in the CSS. You never need to touch JS.
+- **To retune shared behavior** (line weight, breathing amount, blend mode):
+  edit the shared rules (`.atmo-layer`, `.atmo-breathe`, `.atmo-line-draw`,
+  etc.) once — it applies to all five projects, keeping them visually
+  consistent by construction rather than by convention.
+- **To add a sixth project:** add one `.atmo-layer atmo-layer-newproj` SVG
+  block, one opacity rule (`.atmosphere.proj-newproj .atmo-layer-newproj`),
+  one `--atmo-1`/`--atmo-2` override, one entry in `PROJECT_BG_CLASS` (JS),
+  and pick or reuse a breathing-duration class.
+- **Whenever you edit this block, bump the `sw.js` `CACHE` version** — same
+  rule as any other `index.html` change (see Caching section below);
+  Atmosphere edits are easy to mistake for "just visual" and skip this step,
+  but the app shell cache doesn't know the difference.
 
 ---
 
