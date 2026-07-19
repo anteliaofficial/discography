@@ -359,54 +359,74 @@
   <div class="atmo-layer atmo-layer-aria">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-aria-breathe">
-        <path class="atmo-line-shimmer" d="M620,90 L730,230" fill="none" stroke="#ffffff" stroke-width="0.7" style="animation-delay:-1s"/>
-        <path class="atmo-line-shimmer" d="M730,230 L560,300" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-4s"/>
-        <path class="atmo-line-shimmer" d="M560,300 L430,170" fill="none" stroke="#eaf6ff" stroke-width="0.65" style="animation-delay:-7s"/>
-        <path class="atmo-line-shimmer" d="M430,170 L280,340" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-10s"/>
-        <path class="atmo-line-shimmer" d="M280,340 L200,540" fill="none" stroke="#ffffff" stroke-width="0.6" style="animation-delay:-13s"/>
-        <path class="atmo-line-shimmer" d="M380,460 L540,410" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-16s"/>
-        <path class="atmo-line-shimmer" d="M540,410 L560,300" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-19s"/>
-        <path class="atmo-line-shimmer" d="M540,410 L690,500" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-2s"/>
-        <path class="atmo-line-shimmer" d="M690,500 L830,450" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-8s"/>
-        <path class="atmo-line-shimmer" d="M690,500 L730,650" fill="none" stroke="#ffffff" stroke-width="0.6" style="animation-delay:-14s"/>
-        <path class="atmo-line-shimmer" d="M730,650 L560,720" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-20s"/>
-        <path class="atmo-line-shimmer" d="M560,720 L410,620" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:-5s"/>
-        <path class="atmo-line-shimmer" d="M380,460 L280,340" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-11s"/>
-        <path class="atmo-line-shimmer" d="M410,620 L200,540" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:-17s"/>
-        <path class="atmo-line-shimmer" d="M120,760 L280,340" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-6s"/>
-        <path class="atmo-line-shimmer" d="M120,760 L200,540" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-12s"/>
-        <path class="atmo-line-shimmer" d="M850,760 L730,650" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-18s"/>
-        <path class="atmo-line-shimmer" d="M850,760 L830,450" fill="none" stroke="#dceeff" stroke-width="0.5" opacity="0.85" style="animation-delay:-3s"/>
-        <path class="atmo-line-shimmer" d="M900,270 L730,230" fill="none" stroke="#dceeff" stroke-width="0.45" opacity="0.75" style="animation-delay:-9s"/>
+        <!-- eight small, isolated asterisms — 3-4 stars each, each its own little
+             constellation, none connected to the others (no web/net look) -->
 
-        <!-- secondary web — extra connections so the constellation reads as a random, denser sky -->
-        <path class="atmo-line-shimmer" d="M560,300 L690,500" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-15s"/>
-        <path class="atmo-line-shimmer" d="M280,340 L410,620" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-21s"/>
-        <path class="atmo-line-shimmer" d="M830,450 L730,650" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-6.5s"/>
-        <path class="atmo-line-shimmer" d="M620,90 L430,170" fill="none" stroke="#bcdcf2" stroke-width="0.4" opacity="0.65" style="animation-delay:-23s"/>
-        <path class="atmo-line-shimmer" d="M380,460 L560,720" fill="none" stroke="#bcdcf2" stroke-width="0.35" opacity="0.6" style="animation-delay:-9.5s"/>
+        <!-- A -->
+        <path class="atmo-line-shimmer" d="M700,190 L760,240" fill="none" stroke="#ffffff" stroke-width="0.65" style="animation-delay:-1s"/>
+        <path class="atmo-line-shimmer" d="M760,240 L830,200" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-9s"/>
+        <!-- B -->
+        <path class="atmo-line-shimmer" d="M150,300 L220,250" fill="none" stroke="#ffffff" stroke-width="0.6" style="animation-delay:-4s"/>
+        <path class="atmo-line-shimmer" d="M220,250 L260,350" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-13s"/>
+        <!-- C -->
+        <path class="atmo-line-shimmer" d="M430,190 L500,240" fill="none" stroke="#eaf6ff" stroke-width="0.6" style="animation-delay:-7s"/>
+        <path class="atmo-line-shimmer" d="M500,240 L460,310" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:-17s"/>
+        <!-- D -->
+        <path class="atmo-line-shimmer" d="M830,420 L900,460" fill="none" stroke="#ffffff" stroke-width="0.6" style="animation-delay:-2s"/>
+        <path class="atmo-line-shimmer" d="M900,460 L860,530" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-11s"/>
+        <path class="atmo-line-shimmer" d="M860,530 L920,580" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:-20s"/>
+        <!-- E -->
+        <path class="atmo-line-shimmer" d="M520,480 L580,540" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-5s"/>
+        <path class="atmo-line-shimmer" d="M580,540 L460,560" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:-15s"/>
+        <!-- F -->
+        <path class="atmo-line-shimmer" d="M180,650 L250,720" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:-8s"/>
+        <path class="atmo-line-shimmer" d="M250,720 L200,800" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:-19s"/>
+        <!-- G -->
+        <path class="atmo-line-shimmer" d="M400,700 L470,760" fill="none" stroke="#eaf6ff" stroke-width="0.55" style="animation-delay:-3s"/>
+        <path class="atmo-line-shimmer" d="M470,760 L430,820" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:-12s"/>
+        <path class="atmo-line-shimmer" d="M430,820 L510,790" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:-21s"/>
+        <!-- H -->
+        <path class="atmo-line-shimmer" d="M750,700 L820,750" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:-6s"/>
+        <path class="atmo-line-shimmer" d="M820,750 L780,830" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:-16s"/>
 
-        <!-- stars — hollow circumferences, the notable points of each constellation -->
-        <circle class="atmo-dot" cx="620" cy="90"  r="2.6" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:0s"/>
-        <circle class="atmo-dot" cx="730" cy="230" r="2.3" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:1.5s"/>
-        <circle class="atmo-dot" cx="560" cy="300" r="2.5" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:3s"/>
-        <circle class="atmo-dot" cx="430" cy="170" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:4.5s"/>
-        <circle class="atmo-dot" cx="280" cy="340" r="2.4" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:6s"/>
-        <circle class="atmo-dot" cx="380" cy="460" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:7.5s"/>
-        <circle class="atmo-dot" cx="540" cy="410" r="2.5" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:9s"/>
-        <circle class="atmo-dot" cx="690" cy="500" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:10.5s"/>
-        <circle class="atmo-dot" cx="830" cy="450" r="2.4" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:12s"/>
-        <circle class="atmo-dot" cx="730" cy="650" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:13.5s"/>
-        <circle class="atmo-dot" cx="560" cy="720" r="2.5" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:2s"/>
-        <circle class="atmo-dot" cx="410" cy="620" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:8s"/>
-        <circle class="atmo-dot" cx="200" cy="540" r="2"   fill="none" stroke="#eaf6ff" stroke-width="0.45" style="animation-delay:5s"/>
-        <circle class="atmo-dot" cx="120" cy="760" r="1.9" fill="none" stroke="#dceeff" stroke-width="0.45" style="animation-delay:11s"/>
-        <circle class="atmo-dot" cx="850" cy="760" r="1.9" fill="none" stroke="#dceeff" stroke-width="0.45" style="animation-delay:2.5s"/>
-        <circle class="atmo-dot" cx="900" cy="270" r="1.8" fill="none" stroke="#dceeff" stroke-width="0.4" style="animation-delay:6.5s"/>
+        <!-- stars — hollow circumferences, the notable points of each constellation.
+             Kept clear of the top ~180px band, where project title/description text sits. -->
+        <circle class="atmo-dot" cx="700" cy="190" r="2.4" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:0s"/>
+        <circle class="atmo-dot" cx="760" cy="240" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:1.5s"/>
+        <circle class="atmo-dot" cx="830" cy="200" r="2"   fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:3s"/>
 
-        <!-- dense field of small solid stars — more points of light, less empty sky -->
-        <circle class="atmo-dot-faint" cx="150" cy="120" r="1.3" fill="#ffffff" style="animation-delay:1s"/>
-        <circle class="atmo-dot-faint" cx="900" cy="150" r="1.1" fill="#ffffff" style="animation-delay:3s"/>
+        <circle class="atmo-dot" cx="150" cy="300" r="2.3" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:4.5s"/>
+        <circle class="atmo-dot" cx="220" cy="250" r="2"   fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:6s"/>
+        <circle class="atmo-dot" cx="260" cy="350" r="2.2" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:7.5s"/>
+
+        <circle class="atmo-dot" cx="430" cy="190" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:9s"/>
+        <circle class="atmo-dot" cx="500" cy="240" r="2.4" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:10.5s"/>
+        <circle class="atmo-dot" cx="460" cy="310" r="2"   fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:12s"/>
+
+        <circle class="atmo-dot" cx="830" cy="420" r="2.3" fill="none" stroke="#ffffff" stroke-width="0.55" style="animation-delay:13.5s"/>
+        <circle class="atmo-dot" cx="900" cy="460" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:2s"/>
+        <circle class="atmo-dot" cx="860" cy="530" r="2.2" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:8s"/>
+        <circle class="atmo-dot" cx="920" cy="580" r="1.9" fill="none" stroke="#eaf6ff" stroke-width="0.45" style="animation-delay:5s"/>
+
+        <circle class="atmo-dot" cx="520" cy="480" r="2.3" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:11s"/>
+        <circle class="atmo-dot" cx="580" cy="540" r="2"   fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:2.5s"/>
+        <circle class="atmo-dot" cx="460" cy="560" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:6.5s"/>
+
+        <circle class="atmo-dot" cx="180" cy="650" r="2.2" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:0.5s"/>
+        <circle class="atmo-dot" cx="250" cy="720" r="2"   fill="none" stroke="#eaf6ff" stroke-width="0.45" style="animation-delay:4s"/>
+        <circle class="atmo-dot" cx="200" cy="800" r="2.1" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:9.5s"/>
+
+        <circle class="atmo-dot" cx="400" cy="700" r="2.2" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:14s"/>
+        <circle class="atmo-dot" cx="470" cy="760" r="2"   fill="none" stroke="#ffffff" stroke-width="0.45" style="animation-delay:3.5s"/>
+        <circle class="atmo-dot" cx="430" cy="820" r="2.1" fill="none" stroke="#eaf6ff" stroke-width="0.5" style="animation-delay:7s"/>
+        <circle class="atmo-dot" cx="510" cy="790" r="1.9" fill="none" stroke="#ffffff" stroke-width="0.45" style="animation-delay:10s"/>
+
+        <circle class="atmo-dot" cx="750" cy="700" r="2.2" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:1s"/>
+        <circle class="atmo-dot" cx="820" cy="750" r="2"   fill="none" stroke="#eaf6ff" stroke-width="0.45" style="animation-delay:5.5s"/>
+        <circle class="atmo-dot" cx="780" cy="830" r="2.1" fill="none" stroke="#ffffff" stroke-width="0.5" style="animation-delay:8.5s"/>
+
+        <!-- dense field of small solid stars — more points of light, less empty sky.
+             None placed in the top text band. -->
         <circle class="atmo-dot-faint" cx="120" cy="560" r="1.4" fill="#ffffff" style="animation-delay:5s"/>
         <circle class="atmo-dot-faint" cx="960" cy="620" r="1.1" fill="#ffffff" style="animation-delay:7s"/>
         <circle class="atmo-dot-faint" cx="220" cy="850" r="1.3" fill="#ffffff" style="animation-delay:9s"/>
@@ -414,13 +434,12 @@
         <circle class="atmo-dot-faint" cx="60"  cy="330" r="1.2" fill="#ffffff" style="animation-delay:13s"/>
         <circle class="atmo-dot-faint" cx="950" cy="380" r="1.1" fill="#ffffff" style="animation-delay:15s"/>
         <circle class="atmo-dot-faint" cx="40"  cy="900" r="1.2" fill="#ffffff" style="animation-delay:2s"/>
-        <circle class="atmo-dot-faint" cx="480" cy="40"  r="1"   fill="#ffffff" style="animation-delay:4s"/>
         <circle class="atmo-dot-faint" cx="330" cy="960" r="1.2" fill="#ffffff" style="animation-delay:6s"/>
         <circle class="atmo-dot-faint" cx="960" cy="880" r="1"   fill="#ffffff" style="animation-delay:8s"/>
-        <circle class="atmo-dot-faint" cx="670" cy="60"  r="1.1" fill="#ffffff" style="animation-delay:10s"/>
-        <circle class="atmo-dot-faint" cx="40"  cy="230" r="1"   fill="#ffffff" style="animation-delay:12s"/>
         <circle class="atmo-dot-faint" cx="510" cy="890" r="1.2" fill="#ffffff" style="animation-delay:14s"/>
         <circle class="atmo-dot-faint" cx="720" cy="880" r="1"   fill="#ffffff" style="animation-delay:16s"/>
+        <circle class="atmo-dot-faint" cx="640" cy="330" r="1.1" fill="#ffffff" style="animation-delay:10s"/>
+        <circle class="atmo-dot-faint" cx="330" cy="450" r="1"   fill="#ffffff" style="animation-delay:4s"/>
       </g>
     </svg>
   </div>
@@ -460,17 +479,6 @@
         <circle class="atmo-current" cx="420" cy="400" r="2.6" fill="none" stroke="#4fb8cf" stroke-width="0.5" opacity="0.5" style="animation-delay:-9s; animation-duration:47s"/>
         <circle class="atmo-current" cx="780" cy="605" r="2.2" fill="none" stroke="#2e8fa8" stroke-width="0.45" opacity="0.45" style="animation-delay:-30s; animation-duration:52s; animation-direction:reverse"/>
         <circle class="atmo-current" cx="300" cy="840" r="2" fill="none" stroke="#1e6f85" stroke-width="0.45" opacity="0.4" style="animation-delay:-22s; animation-duration:56s"/>
-
-        <!-- flow-direction chevrons — small technical marks reading like current-direction arrows on a chart -->
-        <g class="atmo-mark" style="animation-delay:-5s">
-          <path d="M540,118 l16,-9 M540,118 l16,9" fill="none" stroke="#8fe0f2" stroke-width="0.45"/>
-        </g>
-        <g class="atmo-mark" style="animation-delay:-15s">
-          <path d="M300,388 l16,-9 M300,388 l16,9" fill="none" stroke="#4fb8cf" stroke-width="0.4"/>
-        </g>
-        <g class="atmo-mark" style="animation-delay:-23s">
-          <path d="M660,592 l16,-9 M660,592 l16,9" fill="none" stroke="#2e7f96" stroke-width="0.4"/>
-        </g>
       </g>
     </svg>
   </div>
