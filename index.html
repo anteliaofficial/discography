@@ -429,12 +429,24 @@
   <div class="atmo-layer atmo-layer-arken">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-arken-breathe">
-        <!-- 5 main currents — multi-hump so they read as moving water, not static bands -->
-        <path class="atmo-current" d="M-40,130 Q140,80 320,135 Q500,190 680,120 Q860,60 1040,125" fill="none" stroke="#6fcfe6" stroke-width="0.6" opacity="0.65" style="animation-delay:0s; animation-duration:24s"/>
-        <path class="atmo-current" d="M-40,235 Q160,175 340,240 Q520,305 700,225 Q880,155 1040,230" fill="none" stroke="#4fb8cf" stroke-width="0.6" opacity="0.6" style="animation-delay:-7s; animation-duration:26s"/>
-        <path class="atmo-current" d="M-40,385 Q180,320 380,390 Q580,460 780,375 Q900,325 1040,380" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-14s; animation-duration:28s; animation-direction:reverse"/>
-        <path class="atmo-current" d="M-40,590 Q200,520 420,600 Q640,680 840,585 Q940,545 1040,590" fill="none" stroke="#2e93b5" stroke-width="0.55" opacity="0.5" style="animation-delay:-21s; animation-duration:29s"/>
-        <path class="atmo-current" d="M-40,830 Q220,770 440,835 Q660,900 860,820 Q950,785 1040,825" fill="none" stroke="#1f6f8c" stroke-width="0.5" opacity="0.44" style="animation-delay:-28s; animation-duration:27s; animation-direction:reverse"/>
+        <!-- 5 main currents — smooth cubic-bezier wave silhouette (ported from the Kimi
+             pass), multi-hump so they read as moving water, not static bands -->
+        <path class="atmo-current" d="M-50,189 C150,139 300,239 450,164 S700,64 850,114 S1150,39 1300,89" fill="none" stroke="#6fcfe6" stroke-width="0.6" opacity="0.65" style="animation-delay:0s; animation-duration:24s"/>
+        <path class="atmo-current" d="M-50,294 C200,244 350,344 500,269 S750,169 900,219 S1150,144 1300,194" fill="none" stroke="#4fb8cf" stroke-width="0.6" opacity="0.6" style="animation-delay:-7s; animation-duration:26s"/>
+        <path class="atmo-current" d="M-50,444 C225,394 375,494 525,419 S775,319 925,369 S1125,294 1300,344" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-14s; animation-duration:28s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-50,649 C250,599 400,699 550,624 S800,524 950,574 S1150,499 1300,549" fill="none" stroke="#2e93b5" stroke-width="0.55" opacity="0.5" style="animation-delay:-21s; animation-duration:29s"/>
+        <path class="atmo-current" d="M-50,889 C275,839 425,939 575,864 S825,764 975,814 S1175,739 1300,789" fill="none" stroke="#1f6f8c" stroke-width="0.5" opacity="0.44" style="animation-delay:-28s; animation-duration:27s; animation-direction:reverse"/>
+
+        <!-- depth-mark bubbles — small dots strung along each current, same technique
+             Kimi used for Arken's bathymetric texture -->
+        <g class="atmo-bubbles" opacity="0.4">
+          <circle cx="140" cy="152" r="1.8" fill="#6fcfe6"/><circle cx="400" cy="102" r="2.4" fill="#6fcfe6"/><circle cx="660" cy="148" r="1.6" fill="#6fcfe6"/><circle cx="920" cy="108" r="2.1" fill="#6fcfe6"/>
+          <circle cx="140" cy="257" r="1.8" fill="#4fb8cf"/><circle cx="400" cy="207" r="2.4" fill="#4fb8cf"/><circle cx="660" cy="253" r="1.6" fill="#4fb8cf"/><circle cx="920" cy="213" r="2.1" fill="#4fb8cf"/>
+          <circle cx="140" cy="407" r="1.8" fill="#3aa0bb"/><circle cx="400" cy="357" r="2.4" fill="#3aa0bb"/><circle cx="660" cy="403" r="1.6" fill="#3aa0bb"/><circle cx="920" cy="363" r="2.1" fill="#3aa0bb"/>
+          <circle cx="140" cy="612" r="1.8" fill="#2e93b5"/><circle cx="400" cy="562" r="2.4" fill="#2e93b5"/><circle cx="660" cy="608" r="1.6" fill="#2e93b5"/><circle cx="920" cy="568" r="2.1" fill="#2e93b5"/>
+          <circle cx="140" cy="852" r="1.8" fill="#1f6f8c"/><circle cx="400" cy="802" r="2.4" fill="#1f6f8c"/><circle cx="660" cy="848" r="1.6" fill="#1f6f8c"/><circle cx="920" cy="808" r="2.1" fill="#1f6f8c"/>
+        </g>
+
 
         <!-- secondary depth-contour lines — thin dashed isobars threading between the main currents -->
         <path class="atmo-current" d="M-40,180 Q220,140 460,185 Q700,230 1040,175" fill="none" stroke="#4fb8cf" stroke-width="0.35" stroke-dasharray="2 7" opacity="0.3" style="animation-delay:-4s; animation-duration:44s"/>
