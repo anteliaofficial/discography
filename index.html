@@ -487,42 +487,33 @@
   <div class="atmo-layer atmo-layer-manto">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-manto-breathe">
-        <!-- faint connectors — thread the four clusters into one notebook page -->
-        <path d="M395,375 Q470,430 460,455" fill="none" stroke="#8a7358" stroke-width="0.35" opacity="0.3"/>
-        <path d="M560,410 Q580,470 600,490" fill="none" stroke="#8a7358" stroke-width="0.35" opacity="0.3"/>
-        <path d="M480,555 Q520,560 560,555" fill="none" stroke="#8a7358" stroke-width="0.35" opacity="0.3"/>
+        <!-- faint quadrant threads — tie the four elements into one page -->
+        <line x1="439" y1="370" x2="581" y2="370" stroke="#8a7358" stroke-width="0.3" opacity="0.22"/>
+        <line x1="439" y1="590" x2="581" y2="590" stroke="#8a7358" stroke-width="0.3" opacity="0.22"/>
+        <line x1="400" y1="392" x2="400" y2="568" stroke="#8a7358" stroke-width="0.3" opacity="0.22"/>
+        <line x1="620" y1="392" x2="620" y2="568" stroke="#8a7358" stroke-width="0.3" opacity="0.22"/>
 
-        <!-- cluster A: axis + circle -->
+        <!-- FIRE — upward triangle, no line -->
         <g class="atmo-mark" style="animation-delay:-2s">
-          <line x1="330" y1="360" x2="470" y2="360" stroke="#9a8265" stroke-width="0.5"/>
-          <line x1="400" y1="290" x2="400" y2="430" stroke="#9a8265" stroke-width="0.5"/>
-          <circle cx="400" cy="360" r="34" fill="none" stroke="#c1703f" stroke-width="0.5"/>
-          <circle cx="400" cy="360" r="2.6" fill="none" stroke="#c1703f" stroke-width="0.5"/>
-          <line x1="352" y1="316" x2="364" y2="316" stroke="#9a8265" stroke-width="0.4"/>
-          <line x1="352" y1="316" x2="352" y2="328" stroke="#9a8265" stroke-width="0.4"/>
+          <path d="M400,325 L361,392 L439,392 Z" fill="none" stroke="#c1703f" stroke-width="0.55"/>
+          <circle cx="400" cy="325" r="1.8" fill="#c1703f"/>
         </g>
-        <!-- cluster B: radius / clock + arc -->
+        <!-- AIR — upward triangle, crossed -->
         <g class="atmo-mark" style="animation-delay:-9s">
-          <circle cx="610" cy="390" r="46" fill="none" stroke="#8a7358" stroke-width="0.5"/>
-          <line x1="610" y1="390" x2="610" y2="348" stroke="#8a7358" stroke-width="0.45"/>
-          <line x1="610" y1="390" x2="642" y2="412" stroke="#8a7358" stroke-width="0.4"/>
-          <path d="M558,452 Q590,478 636,466" fill="none" stroke="#c1703f" stroke-width="0.45"/>
-          <circle cx="610" cy="390" r="2.2" fill="#c1703f"/>
+          <path d="M620,325 L581,392 L659,392 Z" fill="none" stroke="#9a8265" stroke-width="0.5"/>
+          <line x1="594" y1="370" x2="646" y2="370" stroke="#9a8265" stroke-width="0.5"/>
+          <circle cx="620" cy="325" r="1.6" fill="#9a8265"/>
         </g>
-        <!-- cluster C: curve + guide -->
+        <!-- WATER — downward triangle, no line -->
         <g class="atmo-mark" style="animation-delay:-16s">
-          <path class="atmo-line-draw" d="M360,560 Q415,515 460,553 Q505,590 550,548" fill="none" stroke="#c1703f" stroke-width="0.5" style="animation-delay:-10s"/>
-          <line x1="360" y1="500" x2="360" y2="620" stroke="#8a7358" stroke-width="0.4"/>
-          <circle cx="460" cy="553" r="2.4" fill="#8a7358"/>
+          <path d="M400,635 L361,568 L439,568 Z" fill="none" stroke="#8a7358" stroke-width="0.5"/>
+          <circle cx="400" cy="635" r="1.7" fill="#8a7358"/>
         </g>
-        <!-- cluster D: molecule / node graph -->
+        <!-- EARTH — downward triangle, crossed -->
         <g class="atmo-mark" style="animation-delay:-22s">
-          <path d="M580,580 L628,556 L676,580 L676,628 L628,652 L580,628 Z" fill="none" stroke="#8a7358" stroke-width="0.45"/>
-          <circle cx="580" cy="580" r="2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
-          <circle cx="676" cy="628" r="2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
-          <circle cx="628" cy="556" r="2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
-          <line x1="628" y1="556" x2="628" y2="508" stroke="#8a7358" stroke-width="0.4"/>
-          <circle cx="628" cy="508" r="2.2" fill="none" stroke="#c1703f" stroke-width="0.4"/>
+          <path d="M620,635 L581,568 L659,568 Z" fill="none" stroke="#6b5a44" stroke-width="0.5"/>
+          <line x1="594" y1="590" x2="646" y2="590" stroke="#6b5a44" stroke-width="0.5"/>
+          <circle cx="620" cy="635" r="1.6" fill="#6b5a44"/>
         </g>
       </g>
     </svg>
