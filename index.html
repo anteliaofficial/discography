@@ -154,6 +154,21 @@
   .atmo-drift-marker{ animation:atmoDriftMarker 60s ease-in-out infinite; }
   @keyframes atmoDriftMarker{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-2.2%, 0.8%); } }
 
+  /* Mauro Fuentes' crosshair — a slow, irregular multi-directional drift, like a
+     scope breathing while searching for center: never settles, never repeats a
+     simple back-and-forth, small amplitude throughout. */
+  .atmo-aim{ animation:atmoAimDrift 44s ease-in-out infinite; }
+  @keyframes atmoAimDrift{
+    0%   { transform:translate(0,0); }
+    14%  { transform:translate(7px,-10px); }
+    29%  { transform:translate(-9px,-5px); }
+    45%  { transform:translate(-6px,11px); }
+    61%  { transform:translate(10px,8px); }
+    76%  { transform:translate(5px,-7px); }
+    90%  { transform:translate(-4px,3px); }
+    100% { transform:translate(0,0); }
+  }
+
   /* Technical marks (Manto, Mauro) — a slow opacity breath, nothing sharper. */
   .atmo-mark{ animation:atmoMarkFade 26s ease-in-out infinite; }
   @keyframes atmoMarkFade{ 0%,100%{ opacity:.55; } 50%{ opacity:.3; } }
@@ -172,7 +187,7 @@
   @media (prefers-reduced-motion: reduce){
     .atmosphere::before, .atmosphere::after,
     .atmo-antelia-breathe, .atmo-aria-breathe, .atmo-arken-breathe, .atmo-manto-breathe, .atmo-mauro-breathe,
-    .atmo-dot, .atmo-dot-faint, .atmo-line-draw, .atmo-line-shimmer, .atmo-current, .atmo-mark, .atmo-orbit, .atmo-drift-marker, .atmo-bubble{ animation:none !important; }
+    .atmo-dot, .atmo-dot-faint, .atmo-line-draw, .atmo-line-shimmer, .atmo-current, .atmo-mark, .atmo-orbit, .atmo-drift-marker, .atmo-bubble, .atmo-aim{ animation:none !important; }
   }
 
   header.top{
@@ -501,35 +516,31 @@
   <div class="atmo-layer atmo-layer-manto">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-manto-breathe">
-        <!-- FIRE — wheel + upward triangle, no line -->
+        <!-- FIRE — upward triangle, no line -->
         <g class="atmo-orbit" style="transform-origin:400px 360px; animation:orbitCW 150s linear infinite;">
           <g class="atmo-mark" style="animation-delay:-2s">
-            <circle cx="400" cy="360" r="95" fill="none" stroke="#c1703f" stroke-width="0.4" opacity="0.55"/>
             <path d="M400,280 L330.7,400 L469.3,400 Z" fill="none" stroke="#c1703f" stroke-width="0.6"/>
             <circle cx="400" cy="280" r="2" fill="#c1703f"/>
           </g>
         </g>
-        <!-- AIR — wheel + upward triangle, crossed -->
+        <!-- AIR — upward triangle, crossed -->
         <g class="atmo-orbit" style="transform-origin:590px 360px; animation:orbitCCW 175s linear infinite;">
           <g class="atmo-mark" style="animation-delay:-9s">
-            <circle cx="590" cy="360" r="95" fill="none" stroke="#9a8265" stroke-width="0.4" opacity="0.55"/>
             <path d="M590,280 L520.7,400 L659.3,400 Z" fill="none" stroke="#9a8265" stroke-width="0.55"/>
             <line x1="544" y1="360" x2="636" y2="360" stroke="#9a8265" stroke-width="0.55"/>
             <circle cx="590" cy="280" r="1.8" fill="#9a8265"/>
           </g>
         </g>
-        <!-- WATER — wheel + downward triangle, no line -->
+        <!-- WATER — downward triangle, no line -->
         <g class="atmo-orbit" style="transform-origin:400px 550px; animation:orbitCCW 195s linear infinite;">
           <g class="atmo-mark" style="animation-delay:-16s">
-            <circle cx="400" cy="550" r="95" fill="none" stroke="#8a7358" stroke-width="0.4" opacity="0.55"/>
             <path d="M400,630 L330.7,510 L469.3,510 Z" fill="none" stroke="#8a7358" stroke-width="0.55"/>
             <circle cx="400" cy="630" r="1.9" fill="#8a7358"/>
           </g>
         </g>
-        <!-- EARTH — wheel + downward triangle, crossed -->
+        <!-- EARTH — downward triangle, crossed -->
         <g class="atmo-orbit" style="transform-origin:590px 550px; animation:orbitCW 220s linear infinite;">
           <g class="atmo-mark" style="animation-delay:-22s">
-            <circle cx="590" cy="550" r="95" fill="none" stroke="#6b5a44" stroke-width="0.4" opacity="0.55"/>
             <path d="M590,630 L520.7,510 L659.3,510 Z" fill="none" stroke="#6b5a44" stroke-width="0.55"/>
             <line x1="544" y1="550" x2="636" y2="550" stroke="#6b5a44" stroke-width="0.55"/>
             <circle cx="590" cy="630" r="1.8" fill="#6b5a44"/>
@@ -543,16 +554,18 @@
   <div class="atmo-layer atmo-layer-mauro">
     <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <g class="atmo-breathe atmo-mauro-breathe">
-        <line x1="60" y1="500" x2="940" y2="500" stroke="#8a8a8a" stroke-width="0.45"/>
-        <line x1="500" y1="80" x2="500" y2="920" stroke="#8a8a8a" stroke-width="0.45"/>
-        <circle cx="500" cy="500" r="20" fill="none" stroke="#a0a0a0" stroke-width="0.5"/>
-        <circle cx="500" cy="500" r="3" fill="none" stroke="#a0a0a0" stroke-width="0.5"/>
-        <line class="atmo-mark" x1="260" y1="490" x2="260" y2="510" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-4s"/>
-        <line class="atmo-mark" x1="740" y1="490" x2="740" y2="510" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-14s"/>
-        <line class="atmo-mark" x1="490" y1="240" x2="510" y2="240" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-9s"/>
-        <line class="atmo-mark" x1="490" y1="760" x2="510" y2="760" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-19s"/>
-        <circle class="atmo-mark" cx="260" cy="500" r="2" fill="none" stroke="#a0a0a0" stroke-width="0.4" style="animation-delay:-6s"/>
-        <circle class="atmo-mark" cx="740" cy="500" r="2" fill="none" stroke="#a0a0a0" stroke-width="0.4" style="animation-delay:-16s"/>
+        <g class="atmo-aim">
+          <line x1="60" y1="500" x2="940" y2="500" stroke="#8a8a8a" stroke-width="0.45"/>
+          <line x1="500" y1="80" x2="500" y2="920" stroke="#8a8a8a" stroke-width="0.45"/>
+          <circle cx="500" cy="500" r="20" fill="none" stroke="#a0a0a0" stroke-width="0.5"/>
+          <circle cx="500" cy="500" r="3" fill="none" stroke="#a0a0a0" stroke-width="0.5"/>
+          <line class="atmo-mark" x1="260" y1="490" x2="260" y2="510" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-4s"/>
+          <line class="atmo-mark" x1="740" y1="490" x2="740" y2="510" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-14s"/>
+          <line class="atmo-mark" x1="490" y1="240" x2="510" y2="240" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-9s"/>
+          <line class="atmo-mark" x1="490" y1="760" x2="510" y2="760" stroke="#8a8a8a" stroke-width="0.4" style="animation-delay:-19s"/>
+          <circle class="atmo-mark" cx="260" cy="500" r="2" fill="none" stroke="#a0a0a0" stroke-width="0.4" style="animation-delay:-6s"/>
+          <circle class="atmo-mark" cx="740" cy="500" r="2" fill="none" stroke="#a0a0a0" stroke-width="0.4" style="animation-delay:-16s"/>
+        </g>
       </g>
     </svg>
   </div>
