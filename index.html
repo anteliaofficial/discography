@@ -223,8 +223,7 @@
     z-index:40;
   }
   .search-dropdown.visible{ opacity:1; visibility:visible; transform:translateY(0); }
-  .search-viewport{ position:relative; height:300px; overflow:hidden; touch-action:none; cursor:default; }
-  .search-viewport.empty{ height:auto; }
+  .search-viewport{ position:relative; overflow:hidden; touch-action:none; cursor:default; }
   .search-track{ position:absolute; top:0; left:0; width:100%; will-change:transform; }
   .search-fade{ position:absolute; left:0; right:0; height:30px; pointer-events:none; z-index:2; }
   .search-fade-top{ top:0; background:linear-gradient(to bottom, var(--bg-raised), transparent); }
@@ -249,7 +248,6 @@
     .search-input{ width:88px; }
     .search-input:focus{ width:140px; }
     .search-dropdown{ width:min(250px, 76vw); }
-    .search-viewport{ height:240px; }
   }
 
   nav.projects, nav.categories{ display:flex; gap:6px; overflow-x:auto; padding:14px 20px 0; scrollbar-width:none; }
@@ -1125,7 +1123,7 @@ function renderMain(){
       (item.date ? '<div class="date">' + item.date + '</div>' : '');
     card.appendChild(cover);
     card.appendChild(meta);
-    if (hasTracks) card.onclick = () => { state.album = item; state.discIndex = 0; renderAll(); };
+    if (hasTracks) card.onclick = () => { state.album = item; state.discIndex = 0; renderAll(); scrollToTopInstant(); };
     grid.appendChild(card);
   });
   main.appendChild(grid);
@@ -1242,6 +1240,17 @@ function playDiscTrack(tracks, label, idx){
   state.qIndex = idx;
   state.currentAlbumTitle = label;
   loadAndPlay();
+}
+
+/* Always land at the top of the page when opening a catalog item (album, EP,
+   single, compilation...), regardless of where the user had scrolled to
+   beforehand. Deliberately NOT called from renderAlbumView()/renderMain()
+   directly — those also re-run when switching discs inside an already-open
+   multi-disc release, where jumping back to top would be an unwanted,
+   unrequested behavior change. Called only from the actual "open" entry
+   points instead: the grid card click, chrono/reel jumps, and search. */
+function scrollToTopInstant(){
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function renderAll(){
@@ -1397,7 +1406,11 @@ function openSearchResult(r){
   closeSearchDropdown();
   searchInput.value = '';
   searchInput.blur();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTopInstant();
+}
+
+function getSearchMaxVisibleRows(){
+  return window.matchMedia('(max-width: 600px)').matches ? 4 : SEARCH_VISIBLE_ROWS;
 }
 
 function renderSearchDropdown(results, query){
@@ -1410,7 +1423,7 @@ function renderSearchDropdown(results, query){
   if (!query.trim()){ closeSearchDropdown(); return; }
 
   if (!results.length){
-    searchViewport.classList.add('empty');
+    searchViewport.style.height = SEARCH_ROW_H + 'px';
     searchTrack.style.transform = 'translateY(0)';
     searchFadeTop.style.opacity = '0';
     searchFadeBottom.style.opacity = '0';
@@ -1420,7 +1433,6 @@ function renderSearchDropdown(results, query){
     return;
   }
 
-  searchViewport.classList.remove('empty');
   results.forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'search-result';
@@ -1436,7 +1448,10 @@ function renderSearchDropdown(results, query){
     searchTrack.appendChild(row);
   });
 
-  searchMaxOffset = Math.max(0, results.length * SEARCH_ROW_H - SEARCH_VISIBLE_ROWS * SEARCH_ROW_H);
+  const maxRows = getSearchMaxVisibleRows();
+  const visibleRows = Math.min(results.length, maxRows);
+  searchViewport.style.height = (visibleRows * SEARCH_ROW_H) + 'px';
+  searchMaxOffset = Math.max(0, results.length * SEARCH_ROW_H - maxRows * SEARCH_ROW_H);
   updateSearchTrackPosition();
   searchDropdown.classList.add('visible');
 }
@@ -1965,7 +1980,7 @@ function renderReel(){
     if (entry.hasTracks){
       row.onclick = () => {
         playChronoFromReel(i);
-        document.querySelector('header.top').scrollIntoView({ behavior: 'smooth' });
+        scrollToTopInstant();
       };
     } else {
       row.style.cursor = 'default';
@@ -2110,6 +2125,16 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
 (function(){
   const cursor = document.getElementById('custom-cursor');
   if (!cursor) return;
+  // The CSS already hides this cursor entirely on touch devices
+  // (`@media (hover: none), (pointer: coarse)`). Mirror that same check here
+  // so the rAF loop and event listeners never even start on those devices —
+  // previously they ran unconditionally forever, doing real per-frame work
+  // on an element nobody could ever see. This is the actual fix for "feels
+  // heavier on mobile": the interpolation math itself was never expensive,
+  // an infinite requestAnimationFrame loop running on hardware that will
+  // never render its result is.
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
   const tgt = { x: window.innerWidth/2, y: window.innerHeight/2 };
   const pos = { x: tgt.x, y: tgt.y };
   let hovering = false;
@@ -2124,8 +2149,8 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   });
 
   (function cursorLoop(){
-    pos.x += (tgt.x - pos.x) * 0.75;
-    pos.y += (tgt.y - pos.y) * 0.75;
+    pos.x += (tgt.x - pos.x) * 0.90;
+    pos.y += (tgt.y - pos.y) * 0.90;
     const s = hovering ? 18 : 10;
     cursor.style.transform = `translate(${pos.x - s/2}px, ${pos.y - s/2}px)`;
     cursor.style.width = cursor.style.height = s + 'px';
