@@ -132,11 +132,6 @@
   .atmo-dot-faint{ animation:atmoTwinkleFaint 18s ease-in-out infinite; transform-origin:center; }
   @keyframes atmoTwinkleFaint{ 0%,100%{ opacity:.12; } 50%{ opacity:.4; } }
 
-  /* Line-draw — used for Manto's diagram connectors: mostly drawn and visible,
-     with an occasional slow redraw rather than a constant flicker. */
-  .atmo-line-draw{ stroke-dasharray:420; stroke-dashoffset:420; animation:atmoDraw 46s ease-in-out infinite; }
-  @keyframes atmoDraw{ 0%{ stroke-dashoffset:420; opacity:0; } 6%{ opacity:.6; } 22%{ stroke-dashoffset:0; opacity:.6; } 88%{ stroke-dashoffset:0; opacity:.6; } 97%{ opacity:0; } 100%{ stroke-dashoffset:420; opacity:0; } }
-
   /* Constellation connections (Aria) — always visibly connected (never fully erases),
      with a brisk traveling-light shimmer so the connections themselves read as active,
      not just static geometry. */
@@ -187,7 +182,7 @@
   @media (prefers-reduced-motion: reduce){
     .atmosphere::before, .atmosphere::after,
     .atmo-antelia-breathe, .atmo-aria-breathe, .atmo-arken-breathe, .atmo-manto-breathe, .atmo-mauro-breathe,
-    .atmo-dot, .atmo-dot-faint, .atmo-line-draw, .atmo-line-shimmer, .atmo-current, .atmo-mark, .atmo-orbit, .atmo-drift-marker, .atmo-bubble, .atmo-aim{ animation:none !important; }
+    .atmo-dot, .atmo-dot-faint, .atmo-line-shimmer, .atmo-current, .atmo-mark, .atmo-orbit, .atmo-drift-marker, .atmo-bubble, .atmo-aim{ animation:none !important; }
   }
 
   header.top{
@@ -322,8 +317,7 @@
   .subtitle-row{ display:flex; align-items:center; gap:8px; }
   .cover-row{ display:flex; align-items:flex-end; gap:14px; margin-bottom:8px; }
   .share-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); font-size:10px; letter-spacing:0.3px; text-transform:uppercase; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:'Sora', sans-serif; margin-bottom:8px; }
-  .share-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
-  .share-btn:hover{ color:var(--accent); }
+  .share-btn:hover{ color:var(--accent); border-color:var(--accent-dim); }
   .solo-cover{ width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:8px; }
 
   .player{
@@ -994,7 +988,6 @@ let state = { project: null, category: null, album: null, sortDesc: true, queue:
 
 const projectNav = document.getElementById('projectNav');
 const categoryNav = document.getElementById('categoryNav');
-const projectInfo = document.getElementById('projectInfo');
 const main = document.getElementById('main');
 const countLabel = document.getElementById('countLabel');
 const sortBtn = document.getElementById('sortBtn');
@@ -2127,7 +2120,7 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   });
 
   document.addEventListener('mouseover', e => {
-    hovering = !!e.target.closest('button, a, [onclick], .card, .disc-card, .chip, .halo-ring, .video-btn, .lyrics-btn, .share-btn, .reel-row, .reel-direction-btn, .nav-arrow, .lightbox-nav');
+    hovering = !!e.target.closest('button, a, .card, .disc-card, .halo-ring, .video-btn, .lyrics-btn, .share-btn, .reel-row, .reel-direction-btn, .search-result, .lightbox-nav');
   });
 
   (function cursorLoop(){
