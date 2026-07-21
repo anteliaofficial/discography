@@ -337,15 +337,17 @@
 
   /* Custom cursor — a small dot that inverts (mix-blend-mode:difference) against
      whatever is beneath it, so it reads white on dark and black on light automatically.
-     Desktop/mouse only; untouched on touch devices. Purely additive. */
+     Desktop/mouse only; untouched on touch devices. Purely additive.
+     Tuned for a subtler, snappier feel: smaller base size, smaller hover growth,
+     and a quicker size transition so the scale-up doesn't lag behind the pointer. */
   @media (hover: hover) and (pointer: fine){
     * { cursor:none !important; }
   }
   #custom-cursor{
-    position:fixed; top:0; left:0; width:12px; height:12px;
+    position:fixed; top:0; left:0; width:10px; height:10px;
     border-radius:50%; background:#fff; mix-blend-mode:difference;
     pointer-events:none; z-index:9999; will-change:transform;
-    transition:width .3s ease, height .3s ease, opacity .3s ease;
+    transition:width .15s ease, height .15s ease, opacity .15s ease;
   }
   @media (hover: none), (pointer: coarse){
     #custom-cursor{ display:none !important; }
@@ -1804,7 +1806,11 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
 })();
 </script>
 
-<!-- Custom cursor — isolated script, touches nothing else in the app -->
+<!-- Custom cursor — isolated script, touches nothing else in the app.
+     Tuned for subtlety: higher lerp factor so the dot tracks the real
+     pointer almost instantly, and a much smaller hover scale (18px vs
+     the previous 48px) so it reads as a gentle accent rather than a
+     jarring, oversized invert-blob taking over the screen. -->
 <script>
 (function(){
   const cursor = document.getElementById('custom-cursor');
@@ -1823,12 +1829,12 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   });
 
   (function cursorLoop(){
-    pos.x += (tgt.x - pos.x) * 0.18;
-    pos.y += (tgt.y - pos.y) * 0.18;
-    const s = hovering ? 48 : 12;
+    pos.x += (tgt.x - pos.x) * 0.45;
+    pos.y += (tgt.y - pos.y) * 0.45;
+    const s = hovering ? 18 : 10;
     cursor.style.transform = `translate(${pos.x - s/2}px, ${pos.y - s/2}px)`;
     cursor.style.width = cursor.style.height = s + 'px';
-    cursor.style.opacity = hovering ? 0.55 : 1;
+    cursor.style.opacity = hovering ? 0.8 : 1;
     requestAnimationFrame(cursorLoop);
   })();
 })();
