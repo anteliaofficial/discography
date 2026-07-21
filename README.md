@@ -5,7 +5,9 @@ on this project next — a human developer, or another AI assistant in a future
 session that doesn't have the conversation history where this was built. It
 assumes no prior context. If you're Claude (or another model) reading this
 cold: read this whole file before touching code. It'll save you from re-deriving
-decisions that were already made deliberately.
+decisions that were already made deliberately, and from "fixing" things that
+are actually intentional (see **Brand & scope**, first thing below — it exists
+because a past session almost flagged an intentional design choice as a bug).
 
 **What this is:** a single-file, no-build, no-backend PWA that streams
 **The Complete Discography of Mauro Fuentes** directly from a Google Drive
@@ -17,12 +19,35 @@ Covers five projects: **Antelia, ARIA, Arken, Manto, Mauro Fuentes.**
 
 ---
 
+## Brand & scope — read this before touching the header or subtitle
+
+**The Antelia™ Experience** is the artist's community and umbrella brand —
+it encompasses his entire musical career as a whole, not one project among
+the five. **The Anti™ Radio** (this app) exists *for* The Antelia™ Experience
+specifically, and for nothing else: it is not a neutral, per-project player
+that happens to also host Antelia — it is Antelia's own listening app, and
+Antelia, ARIA, Arken, Manto, and Mauro Fuentes are the catalog it plays.
+
+This is why `<p id="subtitle">The Antelia™ Experience</p>` in the header is
+**hardcoded and intentionally never changes** when the user switches projects
+in the nav. It is not wired to `applyProjectAtmosphere()` or any other
+project-switching logic, and it should stay that way — it's not a missed
+feature, it's not dead markup, it's the one piece of chrome that names *whose*
+app this is, independent of which project's catalog is currently on screen.
+If a future edit is tempted to make the subtitle read "The ARIA Experience"
+when ARIA is selected, or similar — don't. That would misrepresent the brand
+structure: ARIA is a project *within* The Antelia™ Experience, not a peer
+brand the app also serves.
+
+---
+
 ## Files in this repo
 
 - `index.html` — the entire app. HTML + CSS + JS in one file, no imports, no
   build step, no npm. This is intentional — it needs to be droppable straight
   onto GitHub Pages with zero tooling. Includes the **Atmosphere** background
-  system (per-project ambient identity) — see its own section below.
+  system, the **catalog search**, and the **custom cursor** — each documented
+  in its own section below.
 - `sw.js` — service worker, caches the app shell for PWA installability.
   **Bump the `CACHE` version string every time you edit `index.html` or `sw.js`
   itself**, or returning visitors get stuck on a stale cached version. This has
@@ -38,10 +63,11 @@ On load, the app calls `getCatalog()`, which either returns a `localStorage`-cac
 catalog (1 hour TTL) or calls `buildCatalog()`, which walks the Drive folder
 tree (project → category → release → tracks) using the Drive API, in parallel
 with a concurrency limiter (`mapLimit`), and returns a plain JS object (`CATALOG`).
-Everything else — rendering, playback, the chronological "reel", lyrics, videos
-— reads from that one in-memory object and a single `state` object. There is no
-framework, no virtual DOM, no reactivity system: rendering is just functions
-that clear a container and rebuild its innerHTML/children from `CATALOG` + `state`.
+Everything else — rendering, playback, the chronological "reel", catalog search,
+lyrics, videos — reads from that one in-memory object and a single `state`
+object. There is no framework, no virtual DOM, no reactivity system: rendering
+is just functions that clear a container and rebuild its innerHTML/children
+from `CATALOG` + `state`.
 
 ---
 
@@ -61,6 +87,7 @@ Read top to bottom, this is roughly the order things appear in `index.html`:
 | App state | the single `state` object (see below) |
 | Rendering | `renderProjects()`, `renderProjectInfo()`, `renderCategories()`, `renderMain()`, `renderAlbumView()` |
 | Project blurbs | `PROJECT_INFO` (hardcoded English text per project) |
+| Catalog search | `buildSearchIndex()`, `searchCatalog()`, `renderSearchDropdown()`, `highlightMatch()`, `stripAccents()`/`normSearch()` — see dedicated section below |
 | Image lightbox | `openLightbox()` / `lightboxPrevImg()` / `lightboxNextImg()` |
 | Video lightbox | `openVideoLightbox()` / `videoLightboxPrevVid()` / `videoLightboxNextVid()` |
 | Lyrics viewer | `openLyrics()`, cylinder-style scroll (`lyricsTick()`, pointer handlers) |
@@ -71,6 +98,7 @@ Read top to bottom, this is roughly the order things appear in `index.html`:
 | Shareable release links | `buildShareUrl()`, `shareRelease()`, `findReleaseFromParams()` |
 | Full timeline reel | `buildReelEntries()`, `renderReel()`, hover/drag physics, `playChronoFromReel()`, `advanceChrono()`, `retreatChrono()` |
 | Atmosphere (background identity) | `applyProjectAtmosphere()`, `PROJECT_BG_CLASS` — see dedicated section below |
+| Custom cursor | isolated IIFE at the very end of the file — see dedicated section below |
 
 ---
 
@@ -94,7 +122,130 @@ state = {
 was started from the reel ("Spin the Cylinder"), and it changes what happens
 when a queue runs out — normal playback loops the same release forever;
 chrono mode advances to the next release in the full timeline instead (see
-"Known limits" for the one real gap here).
+"Known limits" for the one real gap here). Note that opening a release from
+**catalog search** sets `state.album` the same way the grid cards do — it does
+**not** set `chronoMode`, so searching and opening a release behaves like a
+normal grid click, not like starting from the reel.
+
+---
+
+## Catalog search
+
+**What it is:** a search box in the header, immediately left of **Retune**,
+that matches across the *entire* catalog — every project, every category —
+not just whatever's currently on screen. Typing shows a dropdown of matches
+sorted newest → oldest, since seeing every match across the whole catalog is
+the priority, not narrowing by project first.
+
+**What it matches**, all accent-insensitive (`normSearch()`/`stripAccents()`
+— "cancion" matches "canción"):
+- Release/single title
+- Track title (inside multi-track albums and multi-disc releases)
+- Project name (e.g. typing "ARIA" surfaces every ARIA release)
+- Category name (e.g. "Singles")
+- Date/year, partial or full (`2021`, `2021.05`, `2021.05.03`)
+
+**No result cap.** Every match is reachable — the dropdown doesn't truncate
+to a fixed number. Instead it uses the exact same hover-edge "cylinder" scroll
+mechanic as the Reel (`.search-viewport` / `.search-track`, the pointer-zone
+speed logic mirrors `reelViewport`'s): hover near the top or bottom edge of
+the dropdown to glide through results, faster the closer to the edge; drag to
+scroll on touch. This was a deliberate consistency choice — the site already
+had one "hover to scroll a list of releases" pattern (the Reel), so search
+reuses it instead of introducing a second, different scroll idiom.
+
+**Highlighting:** the matched substring renders inside `<mark>` (styled via
+CSS, not a native highlight) in both the title and the project/date subline,
+so it's clear *why* a result matched, especially for date-based searches.
+
+**Keyboard:** `↑`/`↓` moves the active row (auto-scrolling it into view if it's
+outside the visible band), `Enter` opens the active row (or the first result
+if none is active yet), `Esc` closes the dropdown. Click-outside also closes it.
+
+**Known limitation worth knowing about:** `searchCatalog()` calls
+`buildSearchIndex()` on every keystroke, which walks the entire `CATALOG`
+object fresh each time. At current catalog size this is unmeasurable, but if
+the catalog grows into the hundreds of releases, building the flat index once
+(on catalog load/refresh) and reusing it across keystrokes would be the
+obvious next optimization — nothing about the index depends on the query
+string, only on `CATALOG` itself.
+
+---
+
+## Custom cursor
+
+**What it is:** a small circular dot (`#custom-cursor`) that replaces the
+native cursor on desktop/mouse (`@media (hover: hover) and (pointer: fine)`;
+untouched on touch devices, where it's hidden entirely). It uses
+`mix-blend-mode:difference` against whatever's underneath, so it reads white
+on dark backgrounds and black on light ones automatically, with no per-element
+color logic needed.
+
+**How the motion works:** the dot doesn't snap to the real pointer position —
+it eases toward it every frame (`pos.x += (tgt.x - pos.x) * 0.75`, same for
+`y`). That `0.75` is the one number to tune if this ever feels off: closer to
+`1` = the dot sticks almost exactly to the real cursor (minimal glide);
+closer to `0` = a longer, more visible lag. `0.75` was landed on deliberately
+after two rounds of tuning — an earlier `0.18` felt sluggish and tedious, `0.45`
+still had a faint but noticeable delay, `0.75` is the current "barely-there,
+pleasant" glide. If it's ever adjusted again, that's the only line to change.
+
+**Hover state:** growing from `10px` to `18px` (`s = hovering ? 18 : 10`) with
+a `.15s` CSS transition on `width`/`height`/`opacity`, whenever the pointer is
+over anything in the `hovering` selector list inside the IIFE. **That selector
+list is the one place you must remember to update by hand** if you add a new
+clickable component to the site — it isn't automatic, it doesn't infer
+"clickable" from `cursor:pointer` or event listeners, it's a hardcoded
+`.closest('...')` call. As of this cleanup it lists real, currently-existing
+classes only (`.card`, `.disc-card`, `.halo-ring`, `.video-btn`, `.lyrics-btn`,
+`.share-btn`, `.reel-row`, `.reel-direction-btn`, `.search-result`,
+`.lightbox-nav`, plus bare `button`/`a`) — a previous version of this list
+still referenced `.chip`, `.nav-arrow`, and `[onclick]`, none of which exist
+in the current markup (see **Code cleanup log** below); those were removed.
+
+**This is isolated on purpose:** the cursor script is its own IIFE at the very
+bottom of the file, touching no shared state, no `CATALOG`, no `state` object.
+It's the safest thing in the whole file to experiment with, because nothing
+else depends on it and it depends on nothing else — the only coupling is that
+hardcoded selector list.
+
+---
+
+## Code cleanup log
+
+This section exists so a future session doesn't waste time re-discovering
+things already checked. As of this pass, the following dead/redundant code
+was found and removed — all four were verified as **genuinely unused** (via
+grep across the whole file, not assumption) before deletion:
+
+1. **`.atmo-line-draw` + `@keyframes atmoDraw`** — defined in CSS with a
+   comment claiming it was "used for Manto's diagram connectors," but no SVG
+   element anywhere in the markup ever carried that class. Leftover from an
+   earlier iteration of the Manto layer that was replaced by the `.atmo-mark`
+   opacity-fade approach that's actually in use. Removed, including its entry
+   in the `prefers-reduced-motion` selector list.
+2. **Duplicate `.share-btn:hover` rule** — two adjacent, identically-scoped
+   rules where the second only overrode `color`, leaving `border-color` from
+   the first to survive by accident rather than by design. Merged into one
+   rule with both properties explicit.
+3. **`const projectInfo = document.getElementById('projectInfo');`** —
+   declared once, never read again anywhere in the file. Removed. (The actual
+   `<div id="projectInfo">` element in the HTML is untouched and still used —
+   just not through this particular unused variable.)
+4. **Ghost selectors in the cursor's hover-detection list** — `.chip`,
+   `.nav-arrow`, and the attribute selector `[onclick]` matched nothing in the
+   current markup (no element uses the `onclick="..."` HTML attribute; all
+   handlers are assigned via the `.onclick =` JS property, which doesn't
+   satisfy that CSS attribute selector). Removed, and `.search-result` was
+   added in their place since it's a real, currently-missing case — search
+   result rows are clickable but weren't triggering the cursor's hover-grow
+   state before this pass.
+
+If you're an AI assistant auditing this file again later: the check that
+found all four was mechanical, not eyeballing — grep every class/id/function
+name across the full file and flag anything with a reference count of exactly
+one (only its own definition). That's a cheap, reliable first pass before
+trusting any "this looks unused" instinct.
 
 ---
 
@@ -162,8 +313,7 @@ change per project:
 - Stroke width ~0.5–0.7px, `fill:none` (no filled shapes, no illustrations).
 - `vector-effect="non-scaling-stroke"` on every stroked element, so lines stay
   crisp and equally thin regardless of how the SVG is scaled to fill different
-  screen sizes — added as a robustness fix over the previous version, which
-  didn't have this and could get uneven stroke weight on stretch.
+  screen sizes.
 - `mix-blend-mode:screen` on `.atmo-layer` — lets the thin strokes glow subtly
   against the near-black background instead of sitting flat on top of it.
 - One shared "breathing" keyframe family (`atmoBreathe21` / `24` / `25` / `28`
@@ -173,11 +323,9 @@ change per project:
   → 21s, Aria 12 → 24s, Arken 5 → 25s, Manto 4 → 28s, Mauro Fuentes 1 → 30s —
   slower for the more minimal/sober identities).
 - No fast motion anywhere. Movement is limited to: opacity breathing
-  (`.atmo-mark`, `.atmo-dot`), `stroke-dashoffset` reveal/hide loops
-  (`.atmo-line-draw`), and small horizontal drift (`.atmo-current`,
+  (`.atmo-mark`, `.atmo-dot`), and small horizontal drift (`.atmo-current`,
   Arken only). Nothing rotates quickly, nothing scales more than ~2%.
-- `@media (prefers-reduced-motion: reduce)` kills every Atmosphere animation
-  — this was already true before and is preserved.
+- `@media (prefers-reduced-motion: reduce)` kills every Atmosphere animation.
 
 ### Per-project identity
 
@@ -194,9 +342,9 @@ change per project:
 - **To restyle one project:** find its `.atmo-layer-X` block in the HTML and
   its `--atmo-1`/`--atmo-2` override in the CSS. You never need to touch JS.
 - **To retune shared behavior** (line weight, breathing amount, blend mode):
-  edit the shared rules (`.atmo-layer`, `.atmo-breathe`, `.atmo-line-draw`,
-  etc.) once — it applies to all five projects, keeping them visually
-  consistent by construction rather than by convention.
+  edit the shared rules (`.atmo-layer`, `.atmo-breathe`, etc.) once — it
+  applies to all five projects, keeping them visually consistent by
+  construction rather than by convention.
 - **To add a sixth project:** add one `.atmo-layer atmo-layer-newproj` SVG
   block, one opacity rule (`.atmosphere.proj-newproj .atmo-layer-newproj`),
   one `--atmo-1`/`--atmo-2` override, one entry in `PROJECT_BG_CLASS` (JS),
@@ -228,7 +376,8 @@ Root folder
 - Releases: `[YYYY.MM.DD] Title` — the date drives sorting; parsed in
   `parseAlbumName()`.
 - Tracks: `NN. Track Title.mp3` — the number drives ordering; the title
-  (without number or extension) is the matching key used by videos and lyrics.
+  (without number or extension) is the matching key used by videos and lyrics
+  (and now also by catalog search).
 - Categories are auto-ordered via `CATEGORY_PRIORITY`: **Albums → Extended →
   Singles → Lives → Collabs → Specials**. Anything not in that list is pushed
   to the end; nothing breaks if a new category name shows up.
@@ -304,7 +453,7 @@ soy la sangre de tu corazón
   are safe.
 - The lyrics viewer uses the same "Spin the Cylinder" scroll physics (hover
   near top/bottom edges to auto-scroll at variable speed on desktop, drag on
-  mobile) instead of a native scrollbar — see the reel section in the code map.
+  mobile) as the Reel and catalog search — see their sections above.
 - No LYR file, or a title that doesn't match anything → no lyrics button
   appears for that track. Nothing breaks either way.
 
@@ -377,6 +526,9 @@ before troubleshooting anything further.
   only looks at `state.queue[state.qIndex + 1]`). It does **not** prefetch across
   a "Spin the Cylinder" release boundary (i.e. the jump `advanceChrono()` makes).
   That jump still does a fresh network fetch with no pre-buffering.
+- **Catalog search rebuilds its flat index on every keystroke** (see the
+  Catalog search section above) — a non-issue at current scale, worth
+  memoizing if the catalog grows substantially.
 - **Mobile background playback is improved, not guaranteed.** Media Session
   API + prefetching next tracks measurably helps Android hold onto playback
   through a locked screen, but Chrome's background-tab freezing and
