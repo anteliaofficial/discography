@@ -1,6 +1,5 @@
-const CACHE = 'antelia-shell-v89';
+const CACHE = 'antelia-shell-v90';
 const SHELL = ['./index.html', './manifest.json'];
-
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
   self.skipWaiting();
@@ -13,7 +12,6 @@ self.addEventListener('activate', (e) => {
     ).then(() => self.clients.claim())
   );
 });
-
 self.addEventListener('fetch', (e) => {
   // Only handle app-shell files; let audio/image requests to Drive pass through the network untouched.
   const url = new URL(e.request.url);
