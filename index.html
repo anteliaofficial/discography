@@ -209,6 +209,42 @@
   }
   .refresh-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
 
+  .header-controls{ display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+
+  .search-wrap{ position:relative; }
+  .search-input{
+    background:rgba(255,255,255,0.03); border:1px solid var(--line); color:var(--ink);
+    font-family:'Sora', sans-serif; font-size:12px; padding:7px 10px; border-radius:8px;
+    width:120px; transition:width .2s ease, border-color .2s ease; outline:none;
+  }
+  .search-input::placeholder{ color:var(--ink-dim); }
+  .search-input:focus{ width:190px; border-color:var(--accent-dim); }
+  .search-dropdown{
+    position:absolute; top:calc(100% + 8px); right:0; width:260px; max-width:80vw;
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:10px;
+    padding:6px; box-shadow:0 14px 40px rgba(0,0,0,0.5);
+    opacity:0; visibility:hidden; transform:translateY(-6px);
+    transition:opacity .18s ease, transform .18s ease, visibility .18s ease;
+    z-index:40; max-height:340px; overflow-y:auto;
+  }
+  .search-dropdown.visible{ opacity:1; visibility:visible; transform:translateY(0); }
+  .search-result{ display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; cursor:pointer; }
+  .search-result:hover{ background:rgba(255,255,255,0.05); }
+  .search-result img, .search-result-noimg{
+    width:44px; height:44px; border-radius:6px; object-fit:cover; flex:0 0 auto;
+    background:linear-gradient(160deg,#1c1c22,#0a0a0d); border:1px solid var(--line);
+  }
+  .search-result-meta{ min-width:0; }
+  .search-result-title{ font-size:13px; color:var(--ink); line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .search-result-sub{ font-size:10.5px; color:var(--ink-dim); font-family:'IBM Plex Mono', monospace; margin-top:2px; }
+  .search-empty{ padding:14px; text-align:center; font-size:12px; color:var(--ink-dim); }
+
+  @media (max-width:600px){
+    .search-input{ width:88px; }
+    .search-input:focus{ width:140px; }
+    .search-dropdown{ width:min(240px, 74vw); }
+  }
+
   nav.projects, nav.categories{ display:flex; gap:6px; overflow-x:auto; padding:14px 20px 0; scrollbar-width:none; }
   nav.categories{ gap:8px; padding-top:16px; }
   .project-info{ padding:14px 20px 0; font-size:12.5px; line-height:1.55; color:var(--ink-dim); max-width:560px; }
@@ -598,7 +634,13 @@
       <h1>The Anti™ Radio <span class="on-air-group"><span class="rec-dot"></span><span class="on-air-text">On Air</span></span></h1>
       <p id="subtitle">The Antelia™ Experience</p>
     </div>
-    <button class="refresh-btn" id="refreshBtn">Retune</button>
+    <div class="header-controls">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar..." autocomplete="off" spellcheck="false">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+      <button class="refresh-btn" id="refreshBtn">Retune</button>
+    </div>
   </header>
 
   <nav class="projects" id="projectNav"></nav>
@@ -1218,6 +1260,107 @@ refreshBtn.onclick = async () => {
   refreshBtn.textContent = 'Retune';
   refreshBtn.disabled = false;
 };
+
+/* Catalog search — flat index across every project/category, matched by
+   release/track title or by date (supports typing a year like "2021" or a
+   full/partial date "2021.05"). Results always sorted newest → oldest and
+   capped at 5, since that's the priority: seeing every match across the
+   whole catalog rather than digging into one project first. */
+function buildSearchIndex(){
+  const idx = [];
+  if (!CATALOG) return idx;
+  Object.keys(CATALOG).forEach((projKey) => {
+    const project = CATALOG[projKey];
+    Object.keys(project.categories).forEach((catKey) => {
+      project.categories[catKey].items.forEach((item) => {
+        idx.push({
+          date: item.date || '',
+          title: item.title,
+          projectLabel: project.label,
+          projKey, catKey, item,
+          cover: item.cover,
+          tracks: item.multiDisc ? item.discs.reduce((acc, d) => acc.concat(d.tracks), []) : (item.tracks || [])
+        });
+      });
+    });
+  });
+  return idx;
+}
+
+function searchCatalog(query){
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const idx = buildSearchIndex();
+  const isDateLike = /^\d{1,4}(\.\d{1,2}(\.\d{1,2})?)?$/.test(q);
+  const results = idx.filter(e => {
+    if (e.title.toLowerCase().includes(q)) return true;
+    if (e.tracks.some(tr => tr.title.toLowerCase().includes(q))) return true;
+    if (isDateLike && e.date && e.date.startsWith(q)) return true;
+    return false;
+  });
+  results.sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date.localeCompare(a.date);
+  });
+  return results.slice(0, 5);
+}
+
+const searchDropdown = document.getElementById('searchDropdown');
+const searchInput = document.getElementById('searchInput');
+
+function closeSearchDropdown(){
+  searchDropdown.classList.remove('visible');
+}
+
+function renderSearchDropdown(results, query){
+  searchDropdown.innerHTML = '';
+  if (!query.trim()){ closeSearchDropdown(); return; }
+  if (!results.length){
+    searchDropdown.innerHTML = '<div class="search-empty">Sin resultados</div>';
+    searchDropdown.classList.add('visible');
+    return;
+  }
+  results.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'search-result';
+    row.innerHTML =
+      (r.cover ? '<img src="' + r.cover + '" loading="lazy">' : '<div class="search-result-noimg"></div>') +
+      '<div class="search-result-meta">' +
+        '<div class="search-result-title">' + r.title + '</div>' +
+        '<div class="search-result-sub">' + r.projectLabel + (r.date ? ' · ' + r.date : '') + '</div>' +
+      '</div>';
+    row.onclick = () => {
+      state.project = r.projKey;
+      state.category = r.catKey;
+      state.album = r.item;
+      state.discIndex = 0;
+      renderAll();
+      closeSearchDropdown();
+      searchInput.value = '';
+      searchInput.blur();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    searchDropdown.appendChild(row);
+  });
+  searchDropdown.classList.add('visible');
+}
+
+searchInput.addEventListener('input', () => {
+  renderSearchDropdown(searchCatalog(searchInput.value), searchInput.value);
+});
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim()) renderSearchDropdown(searchCatalog(searchInput.value), searchInput.value);
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) closeSearchDropdown();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && searchDropdown.classList.contains('visible')){
+    closeSearchDropdown();
+    searchInput.blur();
+  }
+});
 
 /* Player */
 const audio = document.getElementById('audio');
