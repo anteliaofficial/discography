@@ -1,12 +1,14 @@
 {
-  "name": "The Antelia™ Experience",
-  "short_name": "Antelia",
-  "description": "Discografía completa de Mauro Fuentes — Antelia, Arken, ARIA, Manto",
+  "name": "The Anti™ Radio",
+  "short_name": "Anti Radio",
+  "description": "The official discography radio for The Antelia™ Experience — streaming Antelia, ARIA, Arken, Manto, and Mauro Fuentes.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0a0a0d",
   "theme_color": "#0a0a0d",
   "orientation": "portrait",
+  "lang": "en",
   "icons": [
     {
       "src": "icon-192.png",
