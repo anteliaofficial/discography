@@ -144,7 +144,7 @@
   @keyframes atmoLineBreathe{ 0%,100%{ opacity:.4; } 50%{ opacity:.58; } }
 
   /* Currents (Arken) — slow horizontal drift, bathymetric-line feel. */
-  .atmo-current{ animation:atmoCurrentFlow 80s linear infinite; }
+  .atmo-current{ animation:atmoCurrentFlow 80s ease-in-out infinite alternate; }
   @keyframes atmoCurrentFlow{ from{ transform:translateX(0); } to{ transform:translateX(-320px); } }
 
   /* Bubbles — slow, gentle vertical float, like they're rising very slowly underwater */
@@ -307,7 +307,7 @@
   .reel-direction-row{ display:flex; justify-content:center; margin-bottom:14px; }
   .reel-direction-btn{ background:none; border:1px solid var(--line); color:var(--ink-dim); font-size:10px; letter-spacing:0.3px; text-transform:uppercase; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:'Sora', sans-serif; }
   .reel-direction-btn:hover{ color:var(--ink); border-color:var(--accent-dim); }
-  .reel-viewport{ position:relative; height:170px; overflow:hidden; max-width:560px; margin:0 auto; touch-action:none; cursor:default; }
+  .reel-viewport{ position:relative; height:170px; overflow:hidden; max-width:560px; margin:0 auto; touch-action:none; cursor:default; border-radius:10px; }
   .reel-track{ position:absolute; top:0; left:0; width:100%; will-change:transform; }
   .reel-row{ height:34px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; white-space:nowrap; overflow:hidden; padding:0 30px; cursor:pointer; }
   .reel-row .rd{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--cool); flex:0 0 auto; }
@@ -334,9 +334,26 @@
   .lyrics-content{ text-align:center; font-size:15px; line-height:1.8; color:var(--ink); white-space:pre-wrap; padding:20px; }
   .lyrics-content strong{ font-weight:700; color:var(--ink); }
   .lyrics-content em{ font-style:italic; color:var(--ink-dim); }
+
+  /* Custom cursor — a small dot that inverts (mix-blend-mode:difference) against
+     whatever is beneath it, so it reads white on dark and black on light automatically.
+     Desktop/mouse only; untouched on touch devices. Purely additive. */
+  @media (hover: hover) and (pointer: fine){
+    * { cursor:none !important; }
+  }
+  #custom-cursor{
+    position:fixed; top:0; left:0; width:12px; height:12px;
+    border-radius:50%; background:#fff; mix-blend-mode:difference;
+    pointer-events:none; z-index:9999; will-change:transform;
+    transition:width .3s ease, height .3s ease, opacity .3s ease;
+  }
+  @media (hover: none), (pointer: coarse){
+    #custom-cursor{ display:none !important; }
+  }
 </style>
 </head>
 <body>
+<div id="custom-cursor"></div>
 <div class="atmosphere" id="atmosphere">
 
   <!-- ANTELIA · 7 · Resonance / Spectrum / Light — the only multicolor layer -->
@@ -481,9 +498,9 @@
              pass), multi-hump so they read as moving water, not static bands -->
         <path class="atmo-current" d="M-50,189 C150,139 300,239 450,164 S700,64 850,114 S1150,39 1300,89" fill="none" stroke="#6fcfe6" stroke-width="0.6" opacity="0.65" style="animation-delay:0s; animation-duration:65s"/>
         <path class="atmo-current" d="M-50,294 C200,244 350,344 500,269 S750,169 900,219 S1150,144 1300,194" fill="none" stroke="#4fb8cf" stroke-width="0.6" opacity="0.6" style="animation-delay:-7s; animation-duration:70s"/>
-        <path class="atmo-current" d="M-50,444 C225,394 375,494 525,419 S775,319 925,369 S1125,294 1300,344" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-14s; animation-duration:76s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-50,444 C225,394 375,494 525,419 S775,319 925,369 S1125,294 1300,344" fill="none" stroke="#3aa0bb" stroke-width="0.55" opacity="0.55" style="animation-delay:-14s; animation-duration:76s; animation-direction:alternate-reverse"/>
         <path class="atmo-current" d="M-50,649 C250,599 400,699 550,624 S800,524 950,574 S1150,499 1300,549" fill="none" stroke="#2e93b5" stroke-width="0.55" opacity="0.5" style="animation-delay:-21s; animation-duration:78s"/>
-        <path class="atmo-current" d="M-50,889 C275,839 425,939 575,864 S825,764 975,814 S1175,739 1300,789" fill="none" stroke="#1f6f8c" stroke-width="0.5" opacity="0.44" style="animation-delay:-28s; animation-duration:73s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-50,889 C275,839 425,939 575,864 S825,764 975,814 S1175,739 1300,789" fill="none" stroke="#1f6f8c" stroke-width="0.5" opacity="0.44" style="animation-delay:-28s; animation-duration:73s; animation-direction:alternate-reverse"/>
 
         <!-- depth-mark bubbles — small dots strung along each current, same technique
              Kimi used for Arken's bathymetric texture -->
@@ -498,9 +515,9 @@
 
         <!-- secondary depth-contour lines — thin dashed isobars threading between the main currents -->
         <path class="atmo-current" d="M-40,180 Q220,140 460,185 Q700,230 1040,175" fill="none" stroke="#4fb8cf" stroke-width="0.35" stroke-dasharray="2 7" opacity="0.3" style="animation-delay:-4s; animation-duration:119s"/>
-        <path class="atmo-current" d="M-40,310 Q240,270 480,315 Q720,360 1040,300" fill="none" stroke="#3aa0bb" stroke-width="0.35" stroke-dasharray="2 7" opacity="0.28" style="animation-delay:-19s; animation-duration:124s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-40,310 Q240,270 480,315 Q720,360 1040,300" fill="none" stroke="#3aa0bb" stroke-width="0.35" stroke-dasharray="2 7" opacity="0.28" style="animation-delay:-19s; animation-duration:124s; animation-direction:alternate-reverse"/>
         <path class="atmo-current" d="M-40,480 Q260,440 500,485 Q740,530 1040,470" fill="none" stroke="#2e7f96" stroke-width="0.35" stroke-dasharray="2 7" opacity="0.26" style="animation-delay:-11s; animation-duration:113s"/>
-        <path class="atmo-current" d="M-40,700 Q280,655 520,705 Q760,755 1040,690" fill="none" stroke="#1e6f85" stroke-width="0.3" stroke-dasharray="2 7" opacity="0.22" style="animation-delay:-25s; animation-duration:130s; animation-direction:reverse"/>
+        <path class="atmo-current" d="M-40,700 Q280,655 520,705 Q760,755 1040,690" fill="none" stroke="#1e6f85" stroke-width="0.3" stroke-dasharray="2 7" opacity="0.22" style="animation-delay:-25s; animation-duration:130s; animation-direction:alternate-reverse"/>
 
         <!-- drifting current markers — small hollow circles carried slowly along the flow -->
         <circle class="atmo-drift-marker" cx="260" cy="150" r="2.4" fill="none" stroke="#8fe0f2" stroke-width="0.5" opacity="0.6" style="animation-delay:-3s; animation-duration:135s"/>
@@ -1784,6 +1801,36 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   } catch(e){
     main.innerHTML = '<div class="state-msg">Could not load the catalog.<br>' + e.message + '</div>';
   }
+})();
+</script>
+
+<!-- Custom cursor — isolated script, touches nothing else in the app -->
+<script>
+(function(){
+  const cursor = document.getElementById('custom-cursor');
+  if (!cursor) return;
+  const tgt = { x: window.innerWidth/2, y: window.innerHeight/2 };
+  const pos = { x: tgt.x, y: tgt.y };
+  let hovering = false;
+
+  window.addEventListener('mousemove', e => {
+    tgt.x = e.clientX;
+    tgt.y = e.clientY;
+  });
+
+  document.addEventListener('mouseover', e => {
+    hovering = !!e.target.closest('button, a, [onclick], .card, .disc-card, .chip, .halo-ring, .video-btn, .lyrics-btn, .share-btn, .reel-row, .reel-direction-btn, .nav-arrow, .lightbox-nav');
+  });
+
+  (function cursorLoop(){
+    pos.x += (tgt.x - pos.x) * 0.18;
+    pos.y += (tgt.y - pos.y) * 0.18;
+    const s = hovering ? 48 : 12;
+    cursor.style.transform = `translate(${pos.x - s/2}px, ${pos.y - s/2}px)`;
+    cursor.style.width = cursor.style.height = s + 'px';
+    cursor.style.opacity = hovering ? 0.55 : 1;
+    requestAnimationFrame(cursorLoop);
+  })();
 })();
 </script>
 </body>
