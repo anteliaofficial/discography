@@ -6,6 +6,8 @@
 <title>The Anti™ Radio ● On Air</title>
 <meta name="theme-color" content="#0a0a0d">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Sora:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -135,7 +137,7 @@
   /* Constellation connections (Aria) — always visibly connected (never fully erases),
      with a brisk traveling-light shimmer so the connections themselves read as active,
      not just static geometry. */
-  .atmo-line-shimmer{ stroke-dasharray:none; opacity:.5; animation:atmoLineBreathe 12s ease-in-out infinite; }
+  .atmo-line-shimmer{ opacity:.5; animation:atmoLineBreathe 12s ease-in-out infinite; }
   @keyframes atmoLineBreathe{ 0%,100%{ opacity:.4; } 50%{ opacity:.58; } }
 
   /* Currents (Arken) — slow horizontal drift, bathymetric-line feel. */
@@ -177,6 +179,9 @@
   @media (max-width:600px){
     .atmosphere::before{ filter:blur(46px); }
     .atmosphere::after{ filter:blur(46px); }
+    .search-input{ width:88px; }
+    .search-input:focus{ width:140px; }
+    .search-dropdown{ width:min(250px, 76vw); }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -243,12 +248,6 @@
   .search-result-sub{ font-size:10.5px; color:var(--ink-dim); font-family:'IBM Plex Mono', monospace; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .search-result-sub mark{ background:none; color:var(--accent-dim); font-weight:500; }
   .search-empty{ padding:22px 14px; text-align:center; font-size:12px; color:var(--ink-dim); }
-
-  @media (max-width:600px){
-    .search-input{ width:88px; }
-    .search-input:focus{ width:140px; }
-    .search-dropdown{ width:min(250px, 76vw); }
-  }
 
   nav.projects, nav.categories{ display:flex; gap:6px; overflow-x:auto; padding:14px 20px 0; scrollbar-width:none; }
   nav.categories{ gap:8px; padding-top:16px; }
@@ -684,15 +683,15 @@
 
 <div class="player" id="player">
   <div class="seek-bar" id="seekBar"><div class="progress-bar" id="progressBar"></div><div class="seek-remaining" id="seekRemaining"></div></div>
-  <div class="halo-ring" id="playToggle"><div class="inner"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+  <div class="halo-ring" id="playToggle" role="button" tabindex="0" aria-label="Play"><div class="inner"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
   <div class="info">
     <div class="t" id="nowTitle">—</div>
     <div class="a" id="nowAlbum">Tap a track to begin</div>
   </div>
   <div class="time" id="timeDisplay">0:00 / 0:00</div>
   <div class="ctrl">
-    <button id="prevBtn" title="Previous"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-    <button id="nextBtn" title="Next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+    <button id="prevBtn" title="Previous" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+    <button id="nextBtn" title="Next" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
   </div>
 </div>
 
@@ -988,6 +987,9 @@ const projectNav = document.getElementById('projectNav');
 const categoryNav = document.getElementById('categoryNav');
 const main = document.getElementById('main');
 const countLabel = document.getElementById('countLabel');
+const projectInfoText = document.getElementById('projectInfoText');
+const projectInfoToggle = document.getElementById('projectInfoToggle');
+const atmosphereEl = document.getElementById('atmosphere');
 const sortBtn = document.getElementById('sortBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 
@@ -1015,8 +1017,8 @@ const PROJECT_INFO = {
 function renderProjectInfo(){
   const label = CATALOG[state.project] ? CATALOG[state.project].label : '';
   const text = PROJECT_INFO[label];
-  const textEl = document.getElementById('projectInfoText');
-  const toggleBtn = document.getElementById('projectInfoToggle');
+  const textEl = projectInfoText;
+  const toggleBtn = projectInfoToggle;
   textEl.classList.remove('expanded');
   toggleBtn.textContent = 'Read more';
   toggleBtn.style.display = 'none';
@@ -1037,7 +1039,7 @@ function renderProjectInfo(){
 const PROJECT_BG_CLASS = { 'Antelia': 'proj-antelia', 'ARIA': 'proj-aria', 'Arken': 'proj-arken', 'Manto': 'proj-manto', 'Mauro Fuentes': 'proj-mauro' };
 
 function applyProjectAtmosphere(){
-  const atmosphere = document.getElementById('atmosphere');
+  const atmosphere = atmosphereEl;
   if (!atmosphere) return;
   const label = CATALOG[state.project] ? CATALOG[state.project].label : null;
   const cls = PROJECT_BG_CLASS[label] || 'proj-antelia';
@@ -1111,6 +1113,7 @@ function renderMain(){
       const img = document.createElement('img');
       img.src = item.cover;
       img.loading = 'lazy';
+      img.alt = item.title;
       cover.appendChild(img);
     } else {
       const halo = document.createElement('div');
@@ -1123,7 +1126,12 @@ function renderMain(){
       (item.date ? '<div class="date">' + item.date + '</div>' : '');
     card.appendChild(cover);
     card.appendChild(meta);
-    if (hasTracks) card.onclick = () => { state.album = item; state.discIndex = 0; renderAll(); scrollToTopInstant(); };
+    if (hasTracks){
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', 'Open ' + item.title);
+      card.onclick = () => { state.album = item; state.discIndex = 0; renderAll(); scrollToTopInstant(); };
+    }
     grid.appendChild(card);
   });
   main.appendChild(grid);
@@ -1184,7 +1192,10 @@ function renderAlbumView(album){
     album.discs.forEach((disc, i) => {
       const card = document.createElement('div');
       card.className = 'disc-card' + (i === state.discIndex ? ' active' : '');
-      card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '">' : '<div class="halo-placeholder"></div>');
+      card.innerHTML = (disc.cover ? '<img src="' + disc.cover + '" alt="' + disc.name.replace(/"/g, '&quot;') + '">' : '<div class="halo-placeholder"></div>');
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', (i === state.discIndex ? 'View cover art for ' : 'Switch to disc ') + disc.name);
       card.onclick = () => {
         if (i === state.discIndex){
           if (disc.cover) openLightbox(disc.images, 0);
@@ -1203,6 +1214,10 @@ function renderAlbumView(album){
     soloCover.className = 'solo-cover';
     soloCover.style.cursor = 'pointer';
     soloCover.src = currentDisc.cover;
+    soloCover.alt = album.title;
+    soloCover.setAttribute('role', 'button');
+    soloCover.setAttribute('tabindex', '0');
+    soloCover.setAttribute('aria-label', 'View cover art for ' + album.title);
     soloCover.onclick = () => openLightbox(currentDisc.images, 0);
     coverRow.appendChild(soloCover);
     coverRow.appendChild(shareBtn);
@@ -1271,6 +1286,7 @@ refreshBtn.onclick = async () => {
   main.innerHTML = '<div class="state-msg"><div class="hex-halo"><div class="hex-halo-inner"></div></div>Retuning into the HEX...</div>';
   try {
     CATALOG = await getCatalog(true);
+    invalidateSearchIndex();
     if (!state.project || !CATALOG[state.project]) state.project = Object.keys(CATALOG)[0];
     renderAll();
     renderReel();
@@ -1297,6 +1313,8 @@ function stripAccents(str){
 }
 function normSearch(str){ return stripAccents(str).toLowerCase(); }
 
+let searchIndexCache = null;
+
 function buildSearchIndex(){
   const idx = [];
   if (!CATALOG) return idx;
@@ -1305,6 +1323,7 @@ function buildSearchIndex(){
     Object.keys(project.categories).forEach((catKey) => {
       const catLabel = project.categories[catKey].label;
       project.categories[catKey].items.forEach((item) => {
+        const tracks = item.multiDisc ? item.discs.reduce((acc, d) => acc.concat(d.tracks), []) : (item.tracks || []);
         idx.push({
           date: item.date || '',
           title: item.title,
@@ -1312,7 +1331,13 @@ function buildSearchIndex(){
           categoryLabel: catLabel,
           projKey, catKey, item,
           cover: item.cover,
-          tracks: item.multiDisc ? item.discs.reduce((acc, d) => acc.concat(d.tracks), []) : (item.tracks || [])
+          tracks,
+          // Pre-normalized once here, at index-build time, instead of on
+          // every keystroke in searchCatalog() below.
+          normTitle: normSearch(item.title),
+          normProjectLabel: normSearch(project.label),
+          normCategoryLabel: normSearch(catLabel),
+          normTrackTitles: tracks.map(tr => normSearch(tr.title))
         });
       });
     });
@@ -1320,16 +1345,30 @@ function buildSearchIndex(){
   return idx;
 }
 
+/* The index only depends on CATALOG, never on the query string — so it's
+   built once and reused across every keystroke, instead of re-walking the
+   whole nested CATALOG tree (project → category → release → tracks) on
+   every single character typed. invalidateSearchIndex() is called wherever
+   CATALOG itself is reassigned (initial load, Retune), so a stale index
+   never lingers past a catalog refresh. */
+function getSearchIndex(){
+  if (!searchIndexCache) searchIndexCache = buildSearchIndex();
+  return searchIndexCache;
+}
+function invalidateSearchIndex(){
+  searchIndexCache = null;
+}
+
 function searchCatalog(query){
   const q = normSearch(query.trim());
   if (!q) return [];
-  const idx = buildSearchIndex();
+  const idx = getSearchIndex();
   const isDateLike = /^\d{1,4}(\.\d{1,2}(\.\d{1,2})?)?$/.test(q);
   const results = idx.filter(e => {
-    if (normSearch(e.title).includes(q)) return true;
-    if (normSearch(e.projectLabel).includes(q)) return true;
-    if (normSearch(e.categoryLabel).includes(q)) return true;
-    if (e.tracks.some(tr => normSearch(tr.title).includes(q))) return true;
+    if (e.normTitle.includes(q)) return true;
+    if (e.normProjectLabel.includes(q)) return true;
+    if (e.normCategoryLabel.includes(q)) return true;
+    if (e.normTrackTitles.some(t => t.includes(q))) return true;
     if (isDateLike && e.date && e.date.startsWith(q)) return true;
     return false;
   });
@@ -1437,8 +1476,11 @@ function renderSearchDropdown(results, query){
     const row = document.createElement('div');
     row.className = 'search-result';
     row.dataset.idx = i;
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-label', 'Open ' + r.title + (r.date ? ', ' + r.date : ''));
     row.innerHTML =
-      (r.cover ? '<img src="' + r.cover + '" loading="lazy">' : '<div class="search-result-noimg"></div>') +
+      (r.cover ? '<img src="' + r.cover + '" loading="lazy" alt="' + r.title.replace(/"/g, '&quot;') + '">' : '<div class="search-result-noimg"></div>') +
       '<div class="search-result-meta">' +
         '<div class="search-result-title">' + highlightMatch(r.title, query) + '</div>' +
         '<div class="search-result-sub">' + highlightMatch(r.projectLabel, query) + (r.date ? ' · ' + r.date : '') + '</div>' +
@@ -1529,6 +1571,23 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+/* Accessibility: several clickable elements (catalog cards, disc cards,
+   search results, Reel rows, the play/pause halo ring) are plain div
+   elements carrying role="button" + tabindex="0" rather than real button
+   elements, because they need custom internal layout a native button can't
+   cleanly hold. Native buttons get Enter/Space activation for free; divs
+   don't. Rather than wire an individual keydown handler into every one of
+   those creation sites, one delegated listener here covers all of them by
+   activating whichever such element currently has focus. */
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const target = document.activeElement;
+  if (target && target.getAttribute && target.getAttribute('role') === 'button'){
+    e.preventDefault();
+    target.click();
+  }
+});
+
 /* Player */
 const audio = document.getElementById('audio');
 const player = document.getElementById('player');
@@ -1543,6 +1602,17 @@ const seekRemaining = document.getElementById('seekRemaining');
 const haloRing = document.querySelector('.halo-ring');
 
 let prefetchedTrack = { id: null, blobUrl: null };
+// The blob URL currently assigned to audio.src, if any — tracked separately
+// from prefetchedTrack so the two lifecycles never get conflated. Without
+// this, a track consumed from prefetchedTrack into audio.src still shared
+// the same object as the *next* track's pending prefetch; the moment that
+// next prefetch resolved, it revoked prefetchedTrack.blobUrl — which by
+// then was the URL the currently-*playing* track's audio.src was still
+// using, not some discarded leftover. Revoking a blob URL doesn't stop
+// already-buffered audio, but it can break a later seek into a part of the
+// file the browser hadn't buffered yet, since the URL can no longer be
+// re-resolved to fetch further byte ranges.
+let playingBlobUrl = null;
 
 function prefetchNextTrack(){
   const nextIdx = state.qIndex + 1;
@@ -1553,7 +1623,13 @@ function prefetchNextTrack(){
     .then(r => (r.ok ? r.blob() : null))
     .then(blob => {
       if (!blob) return;
-      if (prefetchedTrack.blobUrl) URL.revokeObjectURL(prefetchedTrack.blobUrl);
+      // Only free the outgoing prefetch buffer if it was never actually
+      // consumed into audio.src. If it's the one currently playing, leave
+      // it alone — loadAndPlay() below is what frees that one, and only
+      // once audio has genuinely moved off it.
+      if (prefetchedTrack.blobUrl && prefetchedTrack.blobUrl !== playingBlobUrl){
+        URL.revokeObjectURL(prefetchedTrack.blobUrl);
+      }
       prefetchedTrack = { id: nextTrack.id, blobUrl: URL.createObjectURL(blob) };
     })
     .catch(() => {});
@@ -1567,6 +1643,12 @@ function loadAndPlay(){
   } else {
     audio.src = driveAudio(track.id);
   }
+  // Now that audio has moved on, the previous blob URL (if any) is safe to
+  // free — nothing still needs it.
+  if (playingBlobUrl && playingBlobUrl !== audio.src){
+    URL.revokeObjectURL(playingBlobUrl);
+  }
+  playingBlobUrl = audio.src.startsWith('blob:') ? audio.src : null;
   audio.play().catch(()=>{});
   nowTitle.textContent = track.title;
   nowAlbum.textContent = state.currentAlbumTitle;
@@ -1587,6 +1669,7 @@ function highlightPlayingRow(idx){
 }
 function updatePlayIcon(playing){
   playIcon.innerHTML = playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  playToggle.setAttribute('aria-label', playing ? 'Pause' : 'Play');
 }
 playToggle.onclick = () => {
   if (!audio.src) return;
@@ -1865,8 +1948,7 @@ document.addEventListener('keydown', (e) => {
 let atmoTicking = false;
 function updateAtmoParallax(){
   const sy = Math.min(60, window.scrollY * 0.04);
-  const atmosphere = document.getElementById('atmosphere');
-  if (atmosphere) atmosphere.style.setProperty('--sy', sy + 'px');
+  if (atmosphereEl) atmosphereEl.style.setProperty('--sy', sy + 'px');
   atmoTicking = false;
 }
 window.addEventListener('scroll', () => {
@@ -1978,6 +2060,9 @@ function renderReel(){
     row.className = 'reel-row';
     row.innerHTML = '<span class="rd">' + entry.date + '</span><span class="rt">' + entry.projectLabel + ' - ' + entry.title + '</span>';
     if (entry.hasTracks){
+      row.setAttribute('role', 'button');
+      row.setAttribute('tabindex', '0');
+      row.setAttribute('aria-label', 'Play ' + entry.projectLabel + ' - ' + entry.title);
       row.onclick = () => {
         playChronoFromReel(i);
         scrollToTopInstant();
@@ -2094,6 +2179,7 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   }
   try {
     CATALOG = await getCatalog(false);
+    invalidateSearchIndex();
     const params = new URLSearchParams(location.search);
     const sp = params.get('project');
     const sc = params.get('category');
