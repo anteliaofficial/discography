@@ -2213,36 +2213,45 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   if (!cursor) return;
   // The CSS already hides this cursor entirely on touch devices
   // (`@media (hover: none), (pointer: coarse)`). Mirror that same check here
-  // so the rAF loop and event listeners never even start on those devices —
-  // previously they ran unconditionally forever, doing real per-frame work
-  // on an element nobody could ever see. This is the actual fix for "feels
-  // heavier on mobile": the interpolation math itself was never expensive,
-  // an infinite requestAnimationFrame loop running on hardware that will
-  // never render its result is.
+  // so the listeners never even attach on those devices — previously they
+  // ran unconditionally forever, doing real per-frame work on an element
+  // nobody could ever see. This is the actual fix for "feels heavier on
+  // mobile": the interpolation math itself was never expensive, an infinite
+  // requestAnimationFrame loop running on hardware that will never render
+  // its result is.
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
-  const tgt = { x: window.innerWidth/2, y: window.innerHeight/2 };
-  const pos = { x: tgt.x, y: tgt.y };
-  let hovering = false;
+  // No interpolation, no requestAnimationFrame loop — the dot is placed at
+  // the real pointer position directly inside the mousemove handler, every
+  // event, with zero smoothing. Earlier versions eased toward the pointer
+  // (a "lerp") to give the dot a bit of personality, but at any smoothing
+  // factor that's a deliberate one-or-more-frame lag — which reads as a
+  // sliding/glide sensation some people find unpleasant rather than
+  // charming. This removes that sensation completely: the only motion left
+  // is the CSS transition on width/height/opacity when hovering something
+  // clickable, which is a size change, not a position lag.
+  let x = window.innerWidth / 2, y = window.innerHeight / 2;
+  let size = 10;
+
+  function place(){
+    cursor.style.transform = `translate(${x - size / 2}px, ${y - size / 2}px)`;
+  }
 
   window.addEventListener('mousemove', e => {
-    tgt.x = e.clientX;
-    tgt.y = e.clientY;
+    x = e.clientX;
+    y = e.clientY;
+    place();
   });
 
   document.addEventListener('mouseover', e => {
-    hovering = !!e.target.closest('button, a, .card, .disc-card, .halo-ring, .video-btn, .lyrics-btn, .share-btn, .reel-row, .reel-direction-btn, .search-result, .lightbox-nav');
+    const hovering = !!e.target.closest('button, a, .card, .disc-card, .halo-ring, .video-btn, .lyrics-btn, .share-btn, .reel-row, .reel-direction-btn, .search-result, .lightbox-nav');
+    size = hovering ? 18 : 10;
+    cursor.style.width = cursor.style.height = size + 'px';
+    cursor.style.opacity = hovering ? 0.8 : 1;
+    place();
   });
 
-  (function cursorLoop(){
-    pos.x += (tgt.x - pos.x) * 0.95;
-    pos.y += (tgt.y - pos.y) * 0.95;
-    const s = hovering ? 18 : 10;
-    cursor.style.transform = `translate(${pos.x - s/2}px, ${pos.y - s/2}px)`;
-    cursor.style.width = cursor.style.height = s + 'px';
-    cursor.style.opacity = hovering ? 0.8 : 1;
-    requestAnimationFrame(cursorLoop);
-  })();
+  place();
 })();
 </script>
 </body>
