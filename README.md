@@ -219,40 +219,58 @@ even initialized — on touch devices. It uses `mix-blend-mode:difference`
 against whatever's underneath, so it reads white on dark backgrounds and
 black on light ones automatically, with no per-element color logic needed.
 
-**Mobile performance — this is load-bearing, read before changing anything
-here:** the cursor's entire IIFE (event listeners *and* its
-`requestAnimationFrame` loop) is gated behind one check at the very top:
+**Mobile performance and the touch-device gate:** the cursor's entire IIFE
+(every listener it attaches) is gated behind one check at the very top:
 
 ```js
 if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 ```
 
 This mirrors the CSS media query that already hides the cursor visually on
-touch devices — but before this check existed, the JS ran anyway: an infinite
-rAF loop doing per-frame interpolation math and repeatedly writing inline
-styles to an element nobody could ever see, on every device, forever. That
-was a real, measurable source of "the site feels heavier on mobile" — not
-the interpolation math itself (trivially cheap), but a perpetual loop running
-on hardware that would never render its result. If you ever need to debug
-"why does the cursor feel different on my phone," the answer should be "it
-doesn't run at all there," and if it's running, this guard is the first thing
-to check.
+touch devices, so nothing here even attaches on a phone or tablet. This
+guard predates the current implementation and matters even more now that
+there's no rAF loop to gate — see below.
 
-**How the motion works:** the dot doesn't snap to the real pointer position
-— it eases toward it every frame (`pos.x += (tgt.x - pos.x) * 0.90`, same for
-`y`). That `0.90` is the one number to tune if this ever feels off: closer to
-`1` = the dot sticks almost exactly to the real cursor (minimal glide); closer
-to `0` = a longer, more visible lag. It went through three rounds of tuning —
-`0.18` felt sluggish, `0.45` still had a faint delay, `0.75` was "barely-there,
-pleasant" on desktop, and finally `0.90` for an even more immediate feel once
-it became clear the *perceived* mobile sluggishness was actually the
-always-running-loop issue above, not the interpolation constant. If it's ever
-adjusted again, that's the only line to change; the mobile question is a
-different line entirely (the `matchMedia` guard).
+**How the motion works — no interpolation, no `requestAnimationFrame` loop:**
+the dot is placed at the real pointer position directly inside the
+`mousemove` handler, on every single event, with zero smoothing:
 
-**Hover state:** growing from `10px` to `18px` (`s = hovering ? 18 : 10`) with
-a `.15s` CSS transition on `width`/`height`/`opacity`, whenever the pointer is
-over anything in the `hovering` selector list inside the IIFE. **That selector
+```js
+window.addEventListener('mousemove', e => {
+  x = e.clientX;
+  y = e.clientY;
+  place();
+});
+```
+
+This is a deliberate rewrite, not the original design. Earlier versions
+eased the dot toward the pointer with a "lerp" factor (`pos.x += (tgt.x -
+pos.x) * K`) recalculated every animation frame — which went through several
+rounds of tuning (`0.18` → `0.45` → `0.75` → `0.90` → `0.95`, each step
+trying to make the catch-up faster) before it became clear that *any*
+nonzero smoothing, at *any* factor, is a one-or-more-frame lag by
+definition — and that lag is exactly what read as an unpleasant "sliding"
+sensation to at least one real user, no matter how close the factor got to
+`1`. There is no lerp factor that removes a lag-based effect, because the
+lag is the mechanism, not a side effect of it. The fix wasn't a better
+number — it was removing the interpolation entirely. **If the cursor is ever
+reported as feeling laggy or "sliding" again, do not reach for a tuning
+constant — check whether a lerp/rAF pattern crept back in and remove it the
+same way.**
+
+The only motion left is the CSS `.15s` transition on `width`/`height`/
+`opacity` when hovering something clickable — and that's a *size* change,
+not a position lag, which is why it doesn't reproduce the sliding complaint.
+
+**A nice side effect, not the original goal:** removing the rAF loop makes
+this implementation lighter than even the gated version that came before
+it — there's no per-frame work happening at all now, on any device, ever.
+The cursor is purely event-driven: it does nothing until the mouse actually
+moves or crosses into a hoverable element.
+
+**Hover state:** growing from `10px` to `18px` with a `.15s` CSS transition
+on `width`/`height`/`opacity`, whenever the pointer is over anything in the
+`hovering` selector list inside the IIFE. **That selector
 list is the one place you must remember to update by hand** if you add a new
 clickable component to the site — it isn't automatic, it doesn't infer
 "clickable" from `cursor:pointer` or event listeners, it's a hardcoded
