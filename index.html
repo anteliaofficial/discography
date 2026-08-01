@@ -2235,8 +2235,8 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
   });
 
   (function cursorLoop(){
-    pos.x += (tgt.x - pos.x) * 0.90;
-    pos.y += (tgt.y - pos.y) * 0.90;
+    pos.x += (tgt.x - pos.x) * 0.95;
+    pos.y += (tgt.y - pos.y) * 0.95;
     const s = hovering ? 18 : 10;
     cursor.style.transform = `translate(${pos.x - s/2}px, ${pos.y - s/2}px)`;
     cursor.style.width = cursor.style.height = s + 'px';
