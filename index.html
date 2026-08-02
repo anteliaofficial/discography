@@ -8,12 +8,12 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="The Anti™ Radio ● On Air">
 <meta property="og:description" content="The official discography radio for The Antelia™ Experience — streaming Antelia, ARIA, Arken, Manto, and Mauro Fuentes.">
-<meta property="og:image" content="https://anteliaofficial.github.io/discography/icon-512.png">
+<meta property="og:image" content="https://anteliaofficial.github.io/discography/og-image.jpg">
 <meta property="og:url" content="https://anteliaofficial.github.io/discography/">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The Anti™ Radio ● On Air">
 <meta name="twitter:description" content="The official discography radio for The Antelia™ Experience.">
-<meta name="twitter:image" content="https://anteliaofficial.github.io/discography/icon-512.png">
+<meta name="twitter:image" content="https://anteliaofficial.github.io/discography/og-image.jpg">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -2212,10 +2212,8 @@ function findReleaseFromParams(projectLabel, categoryLabel, date){
 </script>
 
 <!-- Custom cursor — isolated script, touches nothing else in the app.
-     Tuned for subtlety: higher lerp factor so the dot tracks the real
-     pointer almost instantly, and a much smaller hover scale (18px vs
-     the previous 48px) so it reads as a gentle accent rather than a
-     jarring, oversized invert-blob taking over the screen. -->
+     Zero smoothing: the dot tracks the real pointer 1:1 on every mousemove
+     event, with a small hover-grow (10px -> 18px) as the only motion left. -->
 <script>
 (function(){
   const cursor = document.getElementById('custom-cursor');
